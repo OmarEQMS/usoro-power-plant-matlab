@@ -28,12 +28,14 @@ shows the OOP derivative is bit-for-bit identical to the legacy one.
 | `GridProfile` | value | grid frequency `nelec(t)` and voltage `velec(t)`; enables the electrical emergency tests | (grid was fixed in the legacy code) |
 | `Simulator` | handle | RK4 integration, logging, `f(t,x)` assembly | `pba2_rk4` main loop |
 
-Plus the entry scripts `src/run_test1.m` (thesis Figure V.1),
-`src/run_test5.m` (voltage drop, Figure V.9) and `src/run_test6.m`
-(frequency drop, Figure V.10), and two tools: `src/tools/gen_parameters.m`
-(regenerates `Parameters.m` from the legacy constant scripts — run it if
-`src/old/const*.m` ever change) and `src/tools/trim_operating_points.m` (generates the
-77.5% operating point `+model/ic775.mat` needed by Tests 5 and 6).
+Plus the `src/+test` package — `test.run1` … `test.run7`, one function per
+thesis test, each returning the simulation results — the dashboard
+(`src/PlantApp.m`, launcher `src/run_ui.m`) and two tools:
+`src/tools/gen_parameters.m` (regenerates `Parameters.m` from the legacy
+constant scripts — run it if `src/old/const*.m` ever change) and
+`src/tools/trim_operating_points.m` (generates the trimmed 77.5% and 50%
+operating points `+model/ic775.mat` / `+model/ic50.mat` needed by
+Tests 2–7).
 
 ## Data flow per derivative evaluation
 
@@ -66,13 +68,13 @@ and the logger picks its columns from it.
 
 ```matlab
 addpath src
-run_test1          % Test 1: load ramp 100% -> 77.5%   (Fig. V.1,  pp. 65-70)
-run_test2          % Test 2: load ramp 77.5% -> 50%    (Fig. V.3,  pp. 75-80)
-run_test3          % Test 3: load ramp 50% -> 77.5%    (Fig. V.5,  pp. 85-90)
-run_test4          % Test 4: load ramp 77.5% -> 100%   (Fig. V.7,  pp. 95-100)
-run_test5          % Test 5: 30% voltage drop          (Fig. V.9,  pp. 105-110)
-run_test6          % Test 6: frequency drop 60->56 Hz  (Fig. V.10, pp. 111-116)
-run_test7          % Test 7: loss of an FD/ID fan pair (Fig. V.11, pp. 117-122)
+test.run1          % Test 1: load ramp 100% -> 77.5%   (Fig. V.1,  pp. 65-70)
+test.run2          % Test 2: load ramp 77.5% -> 50%    (Fig. V.3,  pp. 75-80)
+test.run3          % Test 3: load ramp 50% -> 77.5%    (Fig. V.5,  pp. 85-90)
+test.run4          % Test 4: load ramp 77.5% -> 100%   (Fig. V.7,  pp. 95-100)
+test.run5          % Test 5: 30% voltage drop          (Fig. V.9,  pp. 105-110)
+test.run6          % Test 6: frequency drop 60->56 Hz  (Fig. V.10, pp. 111-116)
+test.run7          % Test 7: loss of an FD/ID fan pair (Fig. V.11, pp. 117-122)
 ```
 
 Tests 2–7 need the trimmed operating points — run
@@ -80,6 +82,35 @@ Tests 2–7 need the trimmed operating points — run
 `+model/ic775.mat` / `+model/ic50.mat` are missing. Custom load ramps:
 `model.LoadProfile.ramp(ldc0, ldc1, tStart, rate)` (`ldc` = 5 × load
 fraction; thesis rate 15%/min = 0.0125 V/s is the default).
+
+## Interactive dashboard (`PlantApp`)
+
+`run_ui` (or `app = PlantApp();`) opens an interactive dashboard: a
+schematic of the plant whose component blocks are clickable — each opens a
+window with four live charts of that component's key variables — plus a
+scenario dropdown (thesis Tests 1–7 or a steady 100% hold),
+Play/Pause/Reset, an **Inputs** button (live charts of what the plant is
+receiving: LDC load demand, grid frequency, line voltage, operating
+fan-pair count) and a speed selector (1×/5×/20×/Max real time). The status
+bar shows t, power output and throttle pressure live.
+
+![Dashboard](img/ui_main.png)
+![Drum live charts](img/ui_drum_chart.png)
+![Plant inputs during Test 6](img/ui_inputs.png)
+
+Implementation notes (`src/PlantApp.m`, programmatic `uifigure` app — no
+binary `.mlapp`):
+
+- The simulation advances through `model.Simulator.step` (the same RK4
+  scheme as `run`, exposed as a public single-step method), driven by a
+  MATLAB `timer`; the speed selector sets steps per tick.
+- Every step, one signal sample (states + `sig` bus + actuators) is stored
+  in a preallocated buffer; open chart windows redraw from the buffer at
+  the UI rate, so charts can be opened mid-run and show full history.
+- The component registry inside `PlantApp` maps each diagram block to its
+  four charted signals — extend it to add blocks or change signals.
+- Test 7's fan-count step is handled as two simulator phases switched at
+  t = 10 s, exactly as in `test.run7`.
 
 Or programmatically:
 
@@ -137,15 +168,15 @@ res = sim.run(model.InitialConditions.at100(), 700);
 
 All at the thesis 15%/min rate, starting from the trimmed operating points:
 
-- **Test 2** (`run_test2.m`, 77.5% → 50%): matches Figure V.3 closely —
+- **Test 2** (`test.run2`, 77.5% → 50%): matches Figure V.3 closely —
   power settles 299.9 MW with a 294 MW undershoot (thesis ≈298/295),
   throttle peaks 2441 → returns 2416 psia (thesis 2437 → 2415), main steam
   flow ends 529 lb/s (thesis ≈530).
-- **Test 3** (`run_test3.m`, 50% → 77.5%): power overshoots to 471.4 MW
+- **Test 3** (`test.run3`, 50% → 77.5%): power overshoots to 471.4 MW
   (thesis ≈472) and settles 464; the throttle-pressure dip is deeper than
   the thesis (2218 vs ≈2354 psia) and still converging at 700 s —
   consistent with the thesis observation that load *increases* are harder.
-- **Test 4** (`run_test4.m`, 77.5% → 100%): the thesis already calls this
+- **Test 4** (`test.run4`, 77.5% → 100%): the thesis already calls this
   run only "fairly well behaved" (signals saturate, power lags demand).
   In this model the effect is stronger: governor and air demands rail at
   5 V, fuel is held back by the air cross-limit, and the plant tops out
@@ -159,7 +190,7 @@ All at the thesis 15%/min rate, starting from the trimmed operating points:
 
 ## Fan-loss test (thesis Test 7)
 
-`run_test7.m`: at 100% load, one of the two FD+ID fan pairs is lost at
+`test.run7`: at 100% load, one of the two FD+ID fan pairs is lost at
 t = 10 s (no Unit Run-Back; gas recirculation off as in the thesis run).
 The fan count is a configuration constant (`knfd`/`knid`), so the script
 stitches two phases at t = 10 s. Results track Figure V.11 closely:
@@ -180,7 +211,8 @@ at 77.5% vs ≈3.81 in Figure V.9), so it sits closer to the air/fuel signal
 rails. Tests that push toward maximum capability (4, 6, 7) therefore
 saturate earlier or settle deeper than the thesis figures, while their
 transient shapes and mechanisms match. Tests 1, 2, 3 and 5, which stay
-inside the control range, match quantitatively.
+inside the control range, match quantitatively. The investigation plan for
+this offset is in [next_steps.md](next_steps.md).
 
 ## Electrical emergency tests (thesis Tests 5 and 6)
 
@@ -189,7 +221,7 @@ Both start from the trimmed 77.5% operating point
 Test-1 ramp + 1300 s settling + damped swing settling + exact pinning of the
 swing pair; worst residual ≈ 7e-4).
 
-**Test 5** (`run_test5.m`): 30% step drop in line voltage at t = 10 s
+**Test 5** (`test.run5`): 30% step drop in line voltage at t = 10 s
 (4160 → 2912 V). Reproduces thesis Figure V.9 closely — motor torque falls
 with voltage², the auxiliaries slow, the controls compensate, the steam side
 barely moves:
@@ -205,7 +237,7 @@ barely moves:
 
 ![Test 5 auxiliary speeds](img/test5_aux_speeds.png)
 
-**Test 6** (`run_test6.m`): line frequency ramps 60 → 56 Hz at 0.8 Hz/s from
+**Test 6** (`test.run6`): line frequency ramps 60 → 56 Hz at 0.8 Hz/s from
 t = 10 s; gas recirculation control deactivated as in the thesis run.
 Turbine speed drops with the grid to 351.9 rad/s exactly as in Figure V.10;
 governor and air-flow controls rail at 5 V (as in the thesis); the fast

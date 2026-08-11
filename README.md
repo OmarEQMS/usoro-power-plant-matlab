@@ -18,28 +18,29 @@ psia, ft·lbf, rad/s).
 
 | Script | What it does |
 |---|---|
-| `src/run_test1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+model` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
-| `src/run_test2.m` / `run_test3.m` / `run_test4.m` | Thesis Tests 2–4: load ramps 77.5% → 50%, 50% → 77.5%, 77.5% → 100% at 15%/min. |
-| `src/run_test5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). |
-| `src/run_test6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output; uses the documented `kjtre` units correction, see `docs/model.md`). |
-| `src/run_test7.m` | Thesis Test 7: loss of one of two FD/ID fan pairs at 100% load (air-limited output, no run-back). |
-
-Tests 2–7 need the trimmed operating points: run `src/tools/trim_operating_points.m` once first.
-| `src/old/pba2_rk4.m` | Legacy flat-script version of the same run: full model as derivative function `digpte47(t,x)` + RK4. |
+| `src/+test/run1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+model` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
+| `test.run2` / `test.run3` / `test.run4` | Thesis Tests 2–4: load ramps 77.5% → 50%, 50% → 77.5%, 77.5% → 100% at 15%/min. |
+| `src/+test/run5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). |
+| `src/+test/run6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output; uses the documented `kjtre` units correction, see `docs/model.md`). |
+| `src/+test/run7.m` | Thesis Test 7: loss of one of two FD/ID fan pairs at 100% load (air-limited output, no run-back). |
+| `src/run_ui.m` | **Interactive dashboard** (`PlantApp`): clickable plant schematic with per-component live charts, scenario selection (Tests 1–7 / steady hold), play/pause/reset and speed control. |
+| `src/old/pba2_rk4.m` | Legacy flat-script version of the Test-1 run: full model as derivative function `digpte47(t,x)` + RK4. |
 | `src/old/pba1_240814bk.m` | Original port using a *frozen-derivative* scheme (equivalent to explicit Euler), which forced the speed states to be hardcoded. Kept as reference. |
 | `src/old/usoro_ss.m` | Steady-state / initial-condition explorer (legacy). |
+
+Tests 2–7 (and the dashboard's non-Test-1 scenarios) need the trimmed operating points: run `src/tools/trim_operating_points.m` once first.
 
 Run from MATLAB:
 
 ```matlab
 addpath src          % OOP model (add src/old instead for the legacy scripts)
-run_test1
+test.run1
 ```
 
 or headless:
 
 ```
-matlab -batch "addpath('src'); run_test1"
+matlab -batch "addpath('src'); test.run1"
 ```
 
 The run produces six figures matching thesis Figure V.1 (pp. 65–70):
@@ -101,7 +102,7 @@ how the slip crept in. Evidence that the corrected form is right:
   `Hydraulics`, `Turbomachinery`, `HeatTransfer`, `VesselDynamics`,
   `PowerPlant`, `ControlSystem`, `LoadProfile`, `GridProfile`, `Simulator`.
   Architecture, usage and extension guide: `docs/model.md`.
-- `src/run_test1.m` … `src/run_test7.m` — entry scripts (thesis Tests 1–7,
+- `src/+test/run1.m` … `src/+test/run7.m` — entry scripts (thesis Tests 1–7,
   except the coordinated-mode variants).
 - `src/tools/gen_parameters.m` — regenerates `+model/Parameters.m` from the
   legacy constant scripts; `src/tools/trim_operating_points.m` — generates
@@ -119,6 +120,8 @@ Documentation index:
 - `docs/thesis_notes.md` — standalone thesis summary (plant description,
   modeling assumptions, control system, the seven emergency tests,
   verification tables, FORTRAN-listing landmarks).
+- `docs/next_steps.md` — open investigations (the partial-load
+  fuel/gas-recirculation offset chief among them) and planned improvements.
 
 ## Verification
 

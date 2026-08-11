@@ -1,12 +1,11 @@
-%RUN_TEST7 Thesis Test 7: loss of one of two FD+ID fan pairs at 100% load.
-%   Reproduces Usoro (1977) Figure V.11: after 10 s at 100% load, the
-%   number of operating FD and ID fan pairs drops from 2 to 1 with the
-%   load command left at 100% (no Unit Run-Back). The surviving pair
-%   cannot meet the air demand: the air control saturates at 5 V, throttle
-%   pressure falls (thesis: settles ~1700 psia) and the maximum deliverable
-%   power drops (thesis: ~70%, 420 MW). The surviving FD fan slows under
-%   the extra duty; the ID fan speeds up slightly. Gas recirculation
-%   control is deactivated, as in the thesis run (p. 60).
+function res = run7()
+%RUN7 Thesis Test 7: loss of one of two FD+ID fan pairs at 100% load.
+%   res = test.run7() reproduces Usoro (1977) Figure V.11: after 10 s at
+%   100% load, the number of operating FD and ID fan pairs drops from 2
+%   to 1 with the load command left at 100% (no Unit Run-Back). The
+%   surviving pair cannot meet the air demand: the air control saturates,
+%   throttle pressure falls and the deliverable power drops. Gas
+%   recirculation control is deactivated, as in the thesis run (p. 60).
 %
 %   The fan count is a plant configuration constant (knfd/knid), so the
 %   step is simulated as two phases stitched at t = 10 s.
@@ -37,3 +36,4 @@ res.t = [r1.t; r2.t(2:end) + 10];
 res.X = [r1.X; r2.X(2:end, :)];
 res.stateNames = r1.stateNames;
 model.Simulator.plotStandard(res);
+end

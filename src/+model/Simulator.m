@@ -50,6 +50,18 @@ classdef Simulator < handle
             xdot = xdot + obj.control.derivatives(s, u, sig, obj.profile.demand(t));
         end
 
+        function [x, sig, u] = step(obj, t, x)
+            %STEP Advance one RK4 step from t to t+Ts. The returned sig/u
+            %   are evaluated at the *incoming* (t, x), so callers can log
+            %   the pre-step point at no extra cost.
+            h = obj.Ts;
+            [k1, sig, u] = obj.derivative(t, x);
+            k2 = obj.derivative(t + h/2, x + (h/2)*k1);
+            k3 = obj.derivative(t + h/2, x + (h/2)*k2);
+            k4 = obj.derivative(t + h, x + h*k3);
+            x = x + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+        end
+
         function res = run(obj, x0, tEnd)
             %RUN Integrate from x0 over [0, tEnd]; returns trajectories and
             %   the standard signal log (same columns as the legacy xx2).
@@ -70,7 +82,11 @@ classdef Simulator < handle
             x = x0;
             for k = 1:nSteps + 1
                 tk = t(k);
-                [k1, sig] = obj.derivative(tk, x);
+                if k <= nSteps
+                    [xNew, sig] = obj.step(tk, x);
+                else
+                    [~, sig] = obj.derivative(tk, x);
+                end
                 if tk >= nextLog && iLog < nLog
                     iLog = iLog + 1;
                     logRows(iLog, :) = obj.logRow(tk, x, sig);
@@ -79,10 +95,7 @@ classdef Simulator < handle
                 if k == nSteps + 1
                     break
                 end
-                k2 = obj.derivative(tk + h/2, x + (h/2)*k1);
-                k3 = obj.derivative(tk + h/2, x + (h/2)*k2);
-                k4 = obj.derivative(tk + h, x + h*k3);
-                x = x + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+                x = xNew;
                 X(k + 1, :) = x';
             end
             res.t = t;
