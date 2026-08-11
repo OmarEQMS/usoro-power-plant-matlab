@@ -14,28 +14,29 @@ boiler–turbine unit operating in *boiler-following* control mode against an
 infinite bus. All quantities are in English engineering units (lb/s, Btu/lb,
 psia, ft·lbf, rad/s).
 
-## Entry points (`src/`)
+## Entry points
 
 | Script | What it does |
 |---|---|
-| `pba2_rk4.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) with **all 47 states integrated**. The full plant model is evaluated as a true derivative function `digpte47(t,x)` and advanced with classic fixed-step 4th-order Runge–Kutta at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, thesis p. 49). |
-| `pba1_240814bk.m` | Original port of the same scenario using a *frozen-derivative* scheme: the loop evaluates the model once per 0.1 s sample, stores `xdot` in a global, and `ode45` integrates that constant — which makes the update exactly explicit Euler. Kept as reference. |
-| `usoro_ss.m` | Steady-state / initial-condition explorer. |
+| `src/run_test1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+usoro` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
+| `src/old/pba2_rk4.m` | Legacy flat-script version of the same run: full model as derivative function `digpte47(t,x)` + RK4. |
+| `src/old/pba1_240814bk.m` | Original port using a *frozen-derivative* scheme (equivalent to explicit Euler), which forced the speed states to be hardcoded. Kept as reference. |
+| `src/old/usoro_ss.m` | Steady-state / initial-condition explorer (legacy). |
 
-Run from MATLAB with `src/` on the path:
+Run from MATLAB:
 
 ```matlab
-addpath src
-pba2_rk4
+addpath src          % OOP model (add src/old instead for the legacy scripts)
+run_test1
 ```
 
 or headless:
 
 ```
-matlab -batch "addpath('src'); pba2_rk4"
+matlab -batch "addpath('src'); run_test1"
 ```
 
-The run produces six figures matching thesis Figures V.1 (pp. 65–70):
+The run produces six figures matching thesis Figure V.1 (pp. 65–70):
 power/speed/pressure, control demands, drum & deaerator levels, steam
 enthalpies, and auxiliary machine speeds.
 
@@ -89,28 +90,27 @@ how the slip crept in. Evidence that the corrected form is right:
 
 ## Source layout
 
-- `diginit100.m` / `diginit775.m` / `diginit50.m` — constants + initial state
-  `x0` at 100% / 77.5% / 50% load (thesis p. 288 tables), sampling setup
-  (`Ts`, `samples`).
-- `const1.m`, `const2.m`, `const3.m` — plant parameter sets.
-- `digpte47.m` — full plant + control derivative `f(t,x)` (47 states) and the
-  logging row used for plots.
-- `digpte.m` — legacy stub for the frozen-derivative scheme (returns global
-  `dxdt`); only used by `pba1_240814bk.m`.
-- Component modules (thesis Ch. II–III): steam/water property fits
-  (`drstat`, `destat`, `shstat`, `rhstat`, `fwstat`, `cwstat`, `cpstat`,
-  `fpstat`, `crstat`, `cnstat`, `lsstat`, `lwstat`, `rwstat`, `systat`,
-  `rystat`, `hpstat`), flow networks (`shflow`, `fwflow`, `cwflow`, `rwflow`,
-  `arflow`), heat transfer (`fnxfer`, `hxfer`), turbine extractions (`hpext`,
-  `ipext`, `lpext`), machines (`torque`, `fpturb`), drum/deaerator balances
-  (`drum`, `destmr`), and small helpers (`averag`, `xducer`, `limchk`,
-  `check`).
+- `src/+usoro/` — the **OOP model** (current): `Parameters` (generated
+  constants), `StateVector`, `InitialConditions`, `SteamTables`,
+  `Hydraulics`, `Turbomachinery`, `HeatTransfer`, `VesselDynamics`,
+  `PowerPlant`, `ControlSystem`, `LoadProfile`, `Simulator`. Architecture,
+  usage and extension guide: `docs/model_oop.md`.
+- `src/run_test1.m` — entry script (thesis Test 1).
+- `src/tools/gen_parameters.m` — regenerates `+usoro/Parameters.m` from the
+  legacy constant scripts.
+- `src/old/` — the complete legacy flat-script model (entry points
+  `pba1_240814bk.m`, `pba2_rk4.m`, derivative `digpte47.m`, init/constant
+  scripts, and ~30 component functions). Documented in `docs/model_old.md`.
 
-See `docs/model.md` for the full state-vector table, the module ↔ thesis
-correspondence, and a description of the eleven control loops; and
-`docs/thesis_notes.md` for a standalone summary of the thesis itself (plant
-description, modeling assumptions, control system, the seven emergency tests,
-verification tables, and FORTRAN-listing landmarks).
+Documentation index:
+
+- `docs/model_oop.md` — OOP architecture, data flow, validation, how to extend.
+- `docs/model_old.md` — legacy structure: full state-vector table, module ↔
+  thesis correspondence, the eleven control loops, the frozen-speed history
+  and the `crstat` fix.
+- `docs/thesis_notes.md` — standalone thesis summary (plant description,
+  modeling assumptions, control system, the seven emergency tests,
+  verification tables, FORTRAN-listing landmarks).
 
 ## Verification
 

@@ -1,4 +1,9 @@
-# Model notes — Usoro 47th-order Digital Model
+# Model notes — Usoro 47th-order Digital Model (legacy flat-script code)
+
+> **Note:** the code documented here now lives in `src/old/` and is kept as
+> reference. The current, object-oriented implementation (validated
+> bit-for-bit against `src/old/digpte47.m`) is documented in
+> [model_oop.md](model_oop.md).
 
 Reference: P. B. Usoro, *Modeling and Simulation of a Drum Boiler-Turbine Power
 Plant Under Emergency State Control*, M.S. thesis, MIT, May 1977
