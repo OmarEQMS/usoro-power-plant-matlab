@@ -3,7 +3,7 @@
 %   voltage steps 4160 V -> 2912 V. The motor-driven auxiliaries (recirc
 %   and condensate pumps, FD/ID fans) slow down; the controls compensate
 %   and the steam side stays essentially at steady state. Requires the
-%   trimmed 77.5% operating point (run src/tools/trim_op775.m once).
+%   trimmed operating points (run src/tools/trim_operating_points.m once).
 
 par = model.Parameters();
 sim = model.Simulator(model.PowerPlant(par), ...

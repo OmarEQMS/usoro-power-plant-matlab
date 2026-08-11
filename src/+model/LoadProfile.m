@@ -28,10 +28,39 @@ classdef LoadProfile
     end
 
     methods (Static)
+        function obj = ramp(ldc0, ldc1, tStart, rate)
+            %RAMP Hold ldc0, then ramp to ldc1 at |rate| V/s from tStart.
+            %   The thesis load tests all ramp at 15%/min = 0.0125 V/s
+            %   (ldc = 5 x load fraction), which is the default rate.
+            arguments
+                ldc0 (1,1) double
+                ldc1 (1,1) double
+                tStart (1,1) double = 10
+                rate (1,1) double {mustBePositive} = 0.0125
+            end
+            dur = abs(ldc1 - ldc0)/rate;
+            sgn = sign(ldc1 - ldc0);
+            obj = model.LoadProfile(@(t) ldc0 + sgn*rate*max(0, min(t - tStart, dur)));
+        end
+
         function obj = test1()
-            %TEST1 Thesis V.1: 10 s steady, then ramp 100% -> 77.5% at
-            %   15%/min (ldc 5 -> 3.875 over 90 s), then hold.
-            obj = model.LoadProfile(@(t) 5.0 - 0.0125*max(0, min(t, 100) - 10));
+            %TEST1 Thesis V.1: ramp 100% -> 77.5% (ldc 5 -> 3.875 over 90 s).
+            obj = model.LoadProfile.ramp(5.0, 3.875);
+        end
+
+        function obj = test2()
+            %TEST2 Thesis V.2: ramp 77.5% -> 50% (ldc 3.875 -> 2.5 over 110 s).
+            obj = model.LoadProfile.ramp(3.875, 2.5);
+        end
+
+        function obj = test3()
+            %TEST3 Thesis V.3: ramp 50% -> 77.5% (ldc 2.5 -> 3.875 over 110 s).
+            obj = model.LoadProfile.ramp(2.5, 3.875);
+        end
+
+        function obj = test4()
+            %TEST4 Thesis V.4: ramp 77.5% -> 100% (ldc 3.875 -> 5 over 90 s).
+            obj = model.LoadProfile.ramp(3.875, 5.0);
         end
 
         function obj = constant(level)

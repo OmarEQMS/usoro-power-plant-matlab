@@ -19,8 +19,12 @@ psia, ft·lbf, rad/s).
 | Script | What it does |
 |---|---|
 | `src/run_test1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+model` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
-| `src/run_test5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). Needs `src/tools/trim_op775.m` run once first. |
-| `src/run_test6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output). Needs `trim_op775` and uses the documented `kjtre` units correction (see `docs/model.md`). |
+| `src/run_test2.m` / `run_test3.m` / `run_test4.m` | Thesis Tests 2–4: load ramps 77.5% → 50%, 50% → 77.5%, 77.5% → 100% at 15%/min. |
+| `src/run_test5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). |
+| `src/run_test6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output; uses the documented `kjtre` units correction, see `docs/model.md`). |
+| `src/run_test7.m` | Thesis Test 7: loss of one of two FD/ID fan pairs at 100% load (air-limited output, no run-back). |
+
+Tests 2–7 need the trimmed operating points: run `src/tools/trim_operating_points.m` once first.
 | `src/old/pba2_rk4.m` | Legacy flat-script version of the same run: full model as derivative function `digpte47(t,x)` + RK4. |
 | `src/old/pba1_240814bk.m` | Original port using a *frozen-derivative* scheme (equivalent to explicit Euler), which forced the speed states to be hardcoded. Kept as reference. |
 | `src/old/usoro_ss.m` | Steady-state / initial-condition explorer (legacy). |
@@ -97,11 +101,11 @@ how the slip crept in. Evidence that the corrected form is right:
   `Hydraulics`, `Turbomachinery`, `HeatTransfer`, `VesselDynamics`,
   `PowerPlant`, `ControlSystem`, `LoadProfile`, `GridProfile`, `Simulator`.
   Architecture, usage and extension guide: `docs/model.md`.
-- `src/run_test1.m`, `src/run_test5.m`, `src/run_test6.m` — entry scripts
-  (thesis Tests 1, 5, 6).
+- `src/run_test1.m` … `src/run_test7.m` — entry scripts (thesis Tests 1–7,
+  except the coordinated-mode variants).
 - `src/tools/gen_parameters.m` — regenerates `+model/Parameters.m` from the
-  legacy constant scripts; `src/tools/trim_op775.m` — generates the 77.5%
-  operating point.
+  legacy constant scripts; `src/tools/trim_operating_points.m` — generates
+  the trimmed 77.5% and 50% operating points (`ic775.mat`, `ic50.mat`).
 - `src/old/` — the complete legacy flat-script model (entry points
   `pba1_240814bk.m`, `pba2_rk4.m`, derivative `digpte47.m`, init/constant
   scripts, and ~30 component functions). Documented in `docs/model_old.md`.

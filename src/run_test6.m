@@ -4,8 +4,8 @@
 %   but the slowed fans limit air (and hence fuel) flow, so throttle
 %   pressure and power settle below their set points (thesis: ~2125 psia,
 %   ~537 MW - about 90% of rating). Gas recirculation control is
-%   deactivated, as in the thesis run (p. 58). Requires the trimmed 77.5%
-%   operating point (run src/tools/trim_op775.m once).
+%   deactivated, as in the thesis run (p. 58). Requires the trimmed
+%   operating points (run src/tools/trim_operating_points.m once).
 
 par = model.Parameters();
 ctrl = model.ControlSystem(par);
