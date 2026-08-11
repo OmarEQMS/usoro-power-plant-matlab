@@ -210,6 +210,14 @@ The bug was invisible in the frozen-speed `pba1` because the IP-power surplus
 and LP-power deficit it caused nearly cancel in `mwtro`, and the feed pump
 torque balance was never evaluated.
 
+A second thesis-data issue was found later while reproducing Test 6: the
+listed turbine-generator inertia `kjtre = 625000` implies an unphysical
+inertia constant (H ≈ 88 s) and makes the swing pair lose synchronism under
+the thesis's own frequency-ramp test; it is evidently a WR² in lbm·ft²
+needing division by g_c = 32.174. The legacy code here keeps the
+as-listed value; the OOP model applies the correction — see
+[model_oop.md](model_oop.md), "The kjtre units correction".
+
 ## Validation of the un-frozen model (Test 1)
 
 `pba2_rk4.m` (all 47 states live, `crstat` fixed) reproduces thesis Figure V.1

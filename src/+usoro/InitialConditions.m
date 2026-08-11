@@ -20,5 +20,16 @@ classdef InitialConditions
                   4.5617; 4.9573; 2.4688; 4.0737; 4.6034; ...   % 36-40
                   4.5238; 3.1167; 4.4245; 0.0; 5.0; 5.00; 0.52362]; % 41-47
         end
+
+        function x0 = at775()
+            %AT775 77.5% load (465 MW), obtained by trimming this model
+            %   (Test-1 ramp + 1300 s settling at ldc = 3.875). Generated
+            %   by src/tools/trim_op775.m into +usoro/ic775.mat.
+            f = fullfile(fileparts(mfilename('fullpath')), 'ic775.mat');
+            assert(isfile(f), ['%s not found - run src/tools/trim_op775.m ' ...
+                'once to generate the 77.5%% operating point'], f);
+            d = load(f);
+            x0 = d.x775;
+        end
     end
 end

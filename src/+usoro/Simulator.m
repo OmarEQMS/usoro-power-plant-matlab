@@ -18,6 +18,7 @@ classdef Simulator < handle
         plant   usoro.PowerPlant
         control usoro.ControlSystem
         profile usoro.LoadProfile
+        grid    usoro.GridProfile
     end
 
     properties
@@ -26,15 +27,17 @@ classdef Simulator < handle
     end
 
     methods
-        function obj = Simulator(plant, control, profile)
+        function obj = Simulator(plant, control, profile, grid)
             arguments
                 plant   (1,1) usoro.PowerPlant
                 control (1,1) usoro.ControlSystem
                 profile (1,1) usoro.LoadProfile = usoro.LoadProfile.constant(5.0)
+                grid    (1,1) usoro.GridProfile = usoro.GridProfile.nominal()
             end
             obj.plant = plant;
             obj.control = control;
             obj.profile = profile;
+            obj.grid = grid;
         end
 
         function [xdot, sig, u] = derivative(obj, t, x)
@@ -42,7 +45,8 @@ classdef Simulator < handle
             %   plant signal struct and actuator commands for logging.
             s = usoro.StateVector.unpack(x);
             u = obj.control.actuatorCommands(s);
-            [xdot, sig] = obj.plant.evaluate(s, u);
+            g = struct('nelec', obj.grid.frequency(t), 'velec', obj.grid.voltage(t));
+            [xdot, sig] = obj.plant.evaluate(s, u, g);
             xdot = xdot + obj.control.derivatives(s, u, sig, obj.profile.demand(t));
         end
 
@@ -95,6 +99,25 @@ classdef Simulator < handle
             names = {'t','ntr','mwo','psso','whp','c3md','cacvd','cfld', ...
                 'card','vdrw','vdew','cfwd','cdwd','hsso','hrho','csyd', ...
                 'cxggd','nfp','cgrd','cfnd','twwm','nfd','nid','nrp','ncp'};
+        end
+
+        function plotStandard(res)
+            %PLOTSTANDARD The six standard 2x2 figures (thesis Fig. V.x layout).
+            groups = {{'ntr','mwo','psso','whp'}, ...
+                      {'c3md','cacvd','cfld','card'}, ...
+                      {'vdrw','vdew','cfwd','cdwd'}, ...
+                      {'hsso','hrho','csyd','cxggd'}, ...
+                      {'nfp','cgrd','cfnd','twwm'}, ...
+                      {'nfd','nid','nrp','ncp'}};
+            t = res.log(:, 1);
+            for g = 1:numel(groups)
+                figure
+                for i = 1:4
+                    ax = subplot(2, 2, i);
+                    plot(ax, t, res.log(:, strcmp(res.logNames, groups{g}{i})));
+                    title(ax, groups{g}{i});
+                end
+            end
         end
     end
 

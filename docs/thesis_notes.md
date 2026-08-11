@@ -224,6 +224,12 @@ Porting gotchas learned the hard way:
 - Small constant inconsistencies exist in the thesis data itself, e.g.
   `N_elec = 376.991` rad/s vs. speed set point `K_ntr = 377.0` — harmless but
   visible as a tiny standing offset.
+- The listed turbine-generator inertia `KJTRE = 625000` (data deck line
+  ~11462 and parameter table ~7278) appears to be a WR² in lbm·ft², not
+  slug·ft²: as listed it gives H ≈ 88 s and cannot reproduce the Test-6
+  ride-through of Figure V.10 (the swing pair would lose synchronism);
+  divided by g_c it gives H ≈ 2.7 s and matches. The other rotor inertias
+  are validated as-listed by the Test-5 speed transients.
 - The undamped swing pair integrates stably under RK4 at 0.1 s but **not**
   under explicit Euler — any port that degrades the integration scheme will be
   forced to freeze `N_tr` (which is what happened in `pba1_240814bk.m`).

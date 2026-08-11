@@ -19,6 +19,8 @@ psia, ft·lbf, rad/s).
 | Script | What it does |
 |---|---|
 | `src/run_test1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+usoro` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
+| `src/run_test5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). Needs `src/tools/trim_op775.m` run once first. |
+| `src/run_test6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output). Needs `trim_op775` and uses the documented `kjtre` units correction (see `docs/model_oop.md`). |
 | `src/old/pba2_rk4.m` | Legacy flat-script version of the same run: full model as derivative function `digpte47(t,x)` + RK4. |
 | `src/old/pba1_240814bk.m` | Original port using a *frozen-derivative* scheme (equivalent to explicit Euler), which forced the speed states to be hardcoded. Kept as reference. |
 | `src/old/usoro_ss.m` | Steady-state / initial-condition explorer (legacy). |

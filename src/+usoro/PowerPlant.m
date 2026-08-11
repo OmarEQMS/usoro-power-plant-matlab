@@ -22,9 +22,14 @@ classdef PowerPlant < handle
             obj.par = par;
         end
 
-        function [xdot, sig] = evaluate(obj, s, u)
+        function [xdot, sig] = evaluate(obj, s, u, grid)
             %EVALUATE Physical derivatives and plant signals at state s, actuators u.
-            sig = struct();
+            %   grid (optional): struct with fields nelec [rad/s], velec [V];
+            %   defaults to the nominal values in Parameters.
+            if nargin < 4
+                grid = struct('nelec', obj.par.nelec, 'velec', obj.par.velec);
+            end
+            sig = struct('nelec', grid.nelec, 'velec', grid.velec);
             sig = obj.thermoStates(s, sig);
             sig = obj.steamPathAndTurbines(s, u, sig);
             sig = obj.waterSide(s, u, sig);
@@ -269,13 +274,13 @@ classdef PowerPlant < handle
             % Prime-mover torques, level fits and first-stage pressure.
             P = obj.par;
             [sig.tqrp1, sig.mwrp1] = usoro.Turbomachinery.inductionMotor( ...
-                P.nelec, P.velec, P.knrpm, s.nrp, P.krpm, P.srpmax);
+                sig.nelec, sig.velec, P.knrpm, s.nrp, P.krpm, P.srpmax);
             [sig.tqcp1, sig.mwcp1] = usoro.Turbomachinery.inductionMotor( ...
-                P.nelec, P.velec, P.kncpm, s.ncp, P.kcpm, P.scpmax);
+                sig.nelec, sig.velec, P.kncpm, s.ncp, P.kcpm, P.scpmax);
             [sig.tqfd1, sig.mwfd1] = usoro.Turbomachinery.inductionMotor( ...
-                P.nelec, P.velec, P.knfdm, s.nfd, P.kfdm, P.sfdmax);
+                sig.nelec, sig.velec, P.knfdm, s.nfd, P.kfdm, P.sfdmax);
             [sig.tqid1, sig.mwid1] = usoro.Turbomachinery.inductionMotor( ...
-                P.nelec, P.velec, P.knidm, s.nid, P.kidm, P.sidmax);
+                sig.nelec, sig.velec, P.knidm, s.nid, P.kidm, P.sidmax);
             sig.hft1 = sig.hcro;
             if sig.wssx > P.kn0
                 sig.hft1 = s.hsso;
@@ -318,7 +323,7 @@ classdef PowerPlant < handle
                 (s.nfd*sig.rahao*sig.efd))/P.kjfd;
             xdot(22) = (sig.tqid1 - sig.wid*(sig.pido - sig.papgo)*P.kn144/ ...
                 (s.nid*sig.rapgo*sig.eid))/P.kjid;
-            xdot(47) = P.kc1gn*(s.ntr - P.nelec);                % power angle
+            xdot(47) = P.kc1gn*(s.ntr - sig.nelec);              % power angle
         end
     end
 

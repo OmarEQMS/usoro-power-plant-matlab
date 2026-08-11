@@ -141,7 +141,7 @@ classdef Parameters
         kjfpe = 2161.6999999999998;
         kjid = 188000;
         kjrp = 576.10000000000002;
-        kjtre = 625000;
+        kjtre = 625000/32.174; % corrected, see header of this property
         klhm = 1.05;
         klp = 126.41;
         klrl = 0.0083330000000000001;

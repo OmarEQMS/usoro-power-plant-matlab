@@ -51,7 +51,19 @@ fprintf(fid, '\n    properties\n');
 for i = 1:numel(names)
     v = eval(names{i}); %#ok<*EVLDOT>
     assert(isscalar(v) && isnumeric(v), 'unexpected non-scalar constant %s', names{i});
-    fprintf(fid, '        %s = %.17g;\n', names{i}, v);
+    if strcmp(names{i}, 'kjtre')
+        % Units correction: the thesis data deck lists the turbine-generator
+        % inertia as 625000, which as slug*ft^2 would give an impossible
+        % inertia constant H ~ 88 s; read as WR^2 in lbm*ft^2 and divided by
+        % gc it gives H ~ 2.7 s (physical), and reproduces the thesis Test-6
+        % ride-through, which is impossible with the as-listed value (the
+        % swing pair loses synchronism). Tests 1 and 5 are insensitive to
+        % kjtre. See docs/model_oop.md, "The kjtre units correction".
+        fprintf(fid, '        %s = %.17g/32.174; %% corrected, see header of this property\n', ...
+            names{i}, v);
+    else
+        fprintf(fid, '        %s = %.17g;\n', names{i}, v);
+    end
 end
 fprintf(fid, '    end\nend\n');
 fprintf('wrote %s with %d constants\n', outfile, numel(names));

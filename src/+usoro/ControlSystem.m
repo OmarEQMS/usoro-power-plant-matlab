@@ -23,6 +23,10 @@ classdef ControlSystem < handle
         fcp1st (1,1) double = 0
         fctrho (1,1) double = 0
         fcxgg  (1,1) double = 0
+        % Gas recirculation loop enable. The thesis deactivated this loop
+        % for Tests 6 and 7 ("the system took a much longer time to settle
+        % ... occasionally put under manual control", p. 58).
+        gasRecircEnabled (1,1) logical = true
     end
 
     methods
@@ -135,7 +139,7 @@ classdef ControlSystem < handle
 
             % gas recirculation control (enabled beyond the tilt deadband)
             kcgr = P.kn0;
-            if abs(u.xgg) > P.knp087
+            if obj.gasRecircEnabled && abs(u.xgg) > P.knp087
                 kcgr = P.kn1;
             end
             c1gr = u.cxggd - P.kcxgg;
