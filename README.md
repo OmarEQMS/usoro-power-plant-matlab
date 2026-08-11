@@ -18,9 +18,9 @@ psia, ft·lbf, rad/s).
 
 | Script | What it does |
 |---|---|
-| `src/run_test1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+usoro` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
+| `src/run_test1.m` | **Recommended.** Thesis Test 1 (load ramp 100% → 77.5% at 15%/min) on the **OOP model** (`src/+model` package): all 47 states integrated with classic fixed-step RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49). Validated bit-for-bit against the legacy model. |
 | `src/run_test5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). Needs `src/tools/trim_op775.m` run once first. |
-| `src/run_test6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output). Needs `trim_op775` and uses the documented `kjtre` units correction (see `docs/model_oop.md`). |
+| `src/run_test6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output). Needs `trim_op775` and uses the documented `kjtre` units correction (see `docs/model.md`). |
 | `src/old/pba2_rk4.m` | Legacy flat-script version of the same run: full model as derivative function `digpte47(t,x)` + RK4. |
 | `src/old/pba1_240814bk.m` | Original port using a *frozen-derivative* scheme (equivalent to explicit Euler), which forced the speed states to be hardcoded. Kept as reference. |
 | `src/old/usoro_ss.m` | Steady-state / initial-condition explorer (legacy). |
@@ -92,21 +92,23 @@ how the slip crept in. Evidence that the corrected form is right:
 
 ## Source layout
 
-- `src/+usoro/` — the **OOP model** (current): `Parameters` (generated
+- `src/+model/` — the **OOP model** (current): `Parameters` (generated
   constants), `StateVector`, `InitialConditions`, `SteamTables`,
   `Hydraulics`, `Turbomachinery`, `HeatTransfer`, `VesselDynamics`,
-  `PowerPlant`, `ControlSystem`, `LoadProfile`, `Simulator`. Architecture,
-  usage and extension guide: `docs/model_oop.md`.
-- `src/run_test1.m` — entry script (thesis Test 1).
-- `src/tools/gen_parameters.m` — regenerates `+usoro/Parameters.m` from the
-  legacy constant scripts.
+  `PowerPlant`, `ControlSystem`, `LoadProfile`, `GridProfile`, `Simulator`.
+  Architecture, usage and extension guide: `docs/model.md`.
+- `src/run_test1.m`, `src/run_test5.m`, `src/run_test6.m` — entry scripts
+  (thesis Tests 1, 5, 6).
+- `src/tools/gen_parameters.m` — regenerates `+model/Parameters.m` from the
+  legacy constant scripts; `src/tools/trim_op775.m` — generates the 77.5%
+  operating point.
 - `src/old/` — the complete legacy flat-script model (entry points
   `pba1_240814bk.m`, `pba2_rk4.m`, derivative `digpte47.m`, init/constant
   scripts, and ~30 component functions). Documented in `docs/model_old.md`.
 
 Documentation index:
 
-- `docs/model_oop.md` — OOP architecture, data flow, validation, how to extend.
+- `docs/model.md` — OOP architecture, data flow, validation, how to extend.
 - `docs/model_old.md` — legacy structure: full state-vector table, module ↔
   thesis correspondence, the eleven control loops, the frozen-speed history
   and the `crstat` fix.

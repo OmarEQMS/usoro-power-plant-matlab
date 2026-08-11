@@ -6,10 +6,10 @@ classdef GridProfile
 %   time functions enables the thesis's electrical emergency tests.
 %
 %   Examples:
-%     grid = usoro.GridProfile.nominal();  % healthy grid (60 Hz, 4160 V)
-%     grid = usoro.GridProfile.test5();    % thesis Test 5 voltage step
-%     grid = usoro.GridProfile.test6();    % thesis Test 6 frequency ramp
-%     grid = usoro.GridProfile(@(t) 376.991, @(t) 4160*(1 - 0.4*(t>=10)));
+%     grid = model.GridProfile.nominal();  % healthy grid (60 Hz, 4160 V)
+%     grid = model.GridProfile.test5();    % thesis Test 5 voltage step
+%     grid = model.GridProfile.test6();    % thesis Test 6 frequency ramp
+%     grid = model.GridProfile(@(t) 376.991, @(t) 4160*(1 - 0.4*(t>=10)));
 
     properties (SetAccess = immutable)
         nelecFcn (1,1) function_handle = @(t) 376.991
@@ -40,20 +40,20 @@ classdef GridProfile
     methods (Static)
         function obj = nominal()
             %NOMINAL Healthy grid: 60 Hz (376.991 rad/s), 4160 V.
-            obj = usoro.GridProfile(@(t) 376.991, @(t) 4160.0);
+            obj = model.GridProfile(@(t) 376.991, @(t) 4160.0);
         end
 
         function obj = test5()
             %TEST5 Thesis V.5: 10 s steady, then a 30% step drop in line
             %   voltage (4160 V -> 2912 V). Frequency stays nominal.
-            obj = usoro.GridProfile(@(t) 376.991, ...
+            obj = model.GridProfile(@(t) 376.991, ...
                 @(t) 4160.0*(1 - 0.30*(t >= 10)));
         end
 
         function obj = test6()
             %TEST6 Thesis V.6: 10 s steady, then line frequency ramps
             %   60 -> 56 Hz at 0.8 Hz/s over 5 s. Voltage stays nominal.
-            obj = usoro.GridProfile( ...
+            obj = model.GridProfile( ...
                 @(t) 376.991 - 2*pi*0.8*min(max(t - 10, 0), 5), ...
                 @(t) 4160.0);
         end

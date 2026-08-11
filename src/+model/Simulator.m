@@ -1,24 +1,24 @@
 classdef Simulator < handle
 %SIMULATOR Fixed-step RK4 integration of the 47-state Digital Model.
-%   Combines a usoro.PowerPlant, a usoro.ControlSystem and a
-%   usoro.LoadProfile into the full state derivative f(t,x) and advances it
+%   Combines a model.PowerPlant, a model.ControlSystem and a
+%   model.LoadProfile into the full state derivative f(t,x) and advances it
 %   with the classic 4th-order Runge-Kutta scheme at Ts = 0.1 s - the same
 %   integration the thesis used (DYSYS, p. 49). RK4 is stable for the
 %   undamped turbine-generator swing pair; explicit Euler is not (see
 %   docs/model_old.md for that history).
 %
 %   Example:
-%     par = usoro.Parameters();
-%     sim = usoro.Simulator(usoro.PowerPlant(par), ...
-%                           usoro.ControlSystem(par), ...
-%                           usoro.LoadProfile.test1());
-%     res = sim.run(usoro.InitialConditions.at100(), 700);
+%     par = model.Parameters();
+%     sim = model.Simulator(model.PowerPlant(par), ...
+%                           model.ControlSystem(par), ...
+%                           model.LoadProfile.test1());
+%     res = sim.run(model.InitialConditions.at100(), 700);
 
     properties (SetAccess = immutable)
-        plant   usoro.PowerPlant
-        control usoro.ControlSystem
-        profile usoro.LoadProfile
-        grid    usoro.GridProfile
+        plant   model.PowerPlant
+        control model.ControlSystem
+        profile model.LoadProfile
+        grid    model.GridProfile
     end
 
     properties
@@ -29,10 +29,10 @@ classdef Simulator < handle
     methods
         function obj = Simulator(plant, control, profile, grid)
             arguments
-                plant   (1,1) usoro.PowerPlant
-                control (1,1) usoro.ControlSystem
-                profile (1,1) usoro.LoadProfile = usoro.LoadProfile.constant(5.0)
-                grid    (1,1) usoro.GridProfile = usoro.GridProfile.nominal()
+                plant   (1,1) model.PowerPlant
+                control (1,1) model.ControlSystem
+                profile (1,1) model.LoadProfile = model.LoadProfile.constant(5.0)
+                grid    (1,1) model.GridProfile = model.GridProfile.nominal()
             end
             obj.plant = plant;
             obj.control = control;
@@ -43,7 +43,7 @@ classdef Simulator < handle
         function [xdot, sig, u] = derivative(obj, t, x)
             %DERIVATIVE Full 47-state derivative f(t,x); also returns the
             %   plant signal struct and actuator commands for logging.
-            s = usoro.StateVector.unpack(x);
+            s = model.StateVector.unpack(x);
             u = obj.control.actuatorCommands(s);
             g = struct('nelec', obj.grid.frequency(t), 'velec', obj.grid.voltage(t));
             [xdot, sig] = obj.plant.evaluate(s, u, g);
@@ -87,9 +87,9 @@ classdef Simulator < handle
             end
             res.t = t;
             res.X = X;
-            res.stateNames = usoro.StateVector.names();
+            res.stateNames = model.StateVector.names();
             res.log = logRows(1:iLog, :);
-            res.logNames = usoro.Simulator.logNames();
+            res.logNames = model.Simulator.logNames();
         end
     end
 
@@ -123,7 +123,7 @@ classdef Simulator < handle
 
     methods (Access = private)
         function row = logRow(~, tk, x, sig)
-            sv = usoro.StateVector;
+            sv = model.StateVector;
             row = [tk, x(sv.NTR), sig.mwo, sig.psso, sig.whp, x(sv.C3MD), ...
                 x(sv.CACVD), x(sv.CFLD), x(sv.CARD), x(sv.VDRW), x(sv.VDEW), ...
                 x(sv.CFWD), x(sv.CDWD), x(sv.HSSO), x(sv.HRHO), x(sv.CSYD), ...

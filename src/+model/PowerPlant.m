@@ -3,21 +3,21 @@ classdef PowerPlant < handle
 %   Computes the algebraic plant relations and the 23 physical state
 %   derivatives (states 1-22 and 47) as a pure function of the state and
 %   the actuator commands. The control-system states are advanced by
-%   usoro.ControlSystem; usoro.Simulator combines both.
+%   model.ControlSystem; model.Simulator combines both.
 %
 %   The evaluation order follows the thesis/legacy computation sequence
-%   (see docs/model_oop.md). All intermediate variables are accumulated in
+%   (see docs/model.md). All intermediate variables are accumulated in
 %   a signal struct `sig` under their thesis names, which also serves the
 %   control system and the logger.
 
     properties (SetAccess = immutable)
-        par usoro.Parameters
+        par model.Parameters
     end
 
     methods
         function obj = PowerPlant(par)
             arguments
-                par (1,1) usoro.Parameters = usoro.Parameters()
+                par (1,1) model.Parameters = model.Parameters()
             end
             obj.par = par;
         end
@@ -46,23 +46,23 @@ classdef PowerPlant < handle
         function sig = thermoStates(obj, s, sig)
             % Thermodynamic state of each storage element from its state pair.
             [sig.rdrw, sig.hdrw, sig.hdrs, sig.pdrs, sig.tdrs] = ...
-                usoro.SteamTables.drumSaturation(s.rdrs);
+                model.SteamTables.drumSaturation(s.rdrs);
             [sig.rdew, sig.hdew, sig.hdes, sig.pdes, sig.tdes] = ...
-                usoro.SteamTables.deaeratorSaturation(s.rdes);
-            [sig.ppso, sig.tpso, sig.spso] = usoro.SteamTables.superheatedSteam(s.rpso, s.hpso);
-            [sig.psso, sig.tsso, sig.ssso] = usoro.SteamTables.superheatedSteam(s.rsso, s.hsso);
+                model.SteamTables.deaeratorSaturation(s.rdes);
+            [sig.ppso, sig.tpso, sig.spso] = model.SteamTables.superheatedSteam(s.rpso, s.hpso);
+            [sig.psso, sig.tsso, sig.ssso] = model.SteamTables.superheatedSteam(s.rsso, s.hsso);
             % steam chest shares the secondary superheater outlet enthalpy
-            [sig.psco, sig.tsco, sig.ssco] = usoro.SteamTables.superheatedSteam(s.rsco, s.hsso);
-            [sig.prho, sig.trho, sig.srho] = usoro.SteamTables.reheatSteam(s.rrho, s.hrho);
-            [sig.reco, sig.teco] = usoro.SteamTables.feedwater(s.heco, sig.pdrs);
-            [sig.rdvo, sig.tdvo] = usoro.SteamTables.condensateWater(s.hlho, sig.pdes);
+            [sig.psco, sig.tsco, sig.ssco] = model.SteamTables.superheatedSteam(s.rsco, s.hsso);
+            [sig.prho, sig.trho, sig.srho] = model.SteamTables.reheatSteam(s.rrho, s.hrho);
+            [sig.reco, sig.teco] = model.SteamTables.feedwater(s.heco, sig.pdrs);
+            [sig.rdvo, sig.tdvo] = model.SteamTables.condensateWater(s.hlho, sig.pdes);
         end
 
         function sig = steamPathAndTurbines(obj, s, u, sig)
             % Main steam flows, turbine powers and generator load.
             P = obj.par;
             sig.ppsd = sig.pdrs - sig.ppso;
-            sig.wdrs = usoro.Hydraulics.orificeFlow(s.rdrs, sig.ppsd, P.kfps);
+            sig.wdrs = model.Hydraulics.orificeFlow(s.rdrs, sig.ppsd, P.kfps);
             sig.acv = u.agv;
             sig.wtv = P.kcv*sig.acv*sqrt(sig.psso*s.rsso);
             % primary superheater bypass flow at low throttle flow
@@ -71,7 +71,7 @@ classdef PowerPlant < handle
                 sig.wpsx = 101.56064 - 0.39882*sig.wdrs + 4.8626e-4*sig.wdrs*sig.wdrs;
             end
             sig.pssd = sig.ppso - sig.psso;
-            sig.wss1 = usoro.Hydraulics.orificeFlow(s.rsso, sig.pssd, P.kfss);
+            sig.wss1 = model.Hydraulics.orificeFlow(s.rsso, sig.pssd, P.kfss);
             sig.wpso = sig.wss1 + sig.wpsx - u.wsy;
             sig.whp = P.khp*sqrt(s.rsco*sig.psco);
             % feed pump turbine takes main steam instead of IP extraction at low load
@@ -80,7 +80,7 @@ classdef PowerPlant < handle
                 sig.wssx = u.wft;
             end
             sig.wsso = sig.wtv + sig.wssx;
-            [sig.whpaux, sig.w1hhs] = usoro.Turbomachinery.hpExtraction(sig.whp);
+            [sig.whpaux, sig.w1hhs] = model.Turbomachinery.hpExtraction(sig.whp);
             sig.whpo = sig.whp - sig.whpaux - sig.w1hhs;
             sig.wrh1 = sig.whpo + u.wry;
             sig.wiv = P.kip*u.aiv*sqrt(s.rrho*sig.prho);
@@ -88,16 +88,16 @@ classdef PowerPlant < handle
             % turbine expansions (efficiencies per thesis pp. 145-151)
             sig.ehp = 0.589 + 2.317e-4*sig.whp;
             sig.phpo = sig.prho + P.kfrh*sig.wip*sig.wip/s.rrho;
-            [sig.hhpo, sig.thpo] = usoro.SteamTables.hpTurbineExhaust( ...
+            [sig.hhpo, sig.thpo] = model.SteamTables.hpTurbineExhaust( ...
                 sig.ssso, sig.phpo, sig.ehp, s.hsso);
             sig.eip = 0.814;
-            [sig.hcro, sig.pcro, sig.tcro] = usoro.SteamTables.crossoverSteam( ...
+            [sig.hcro, sig.pcro, sig.tcro] = model.SteamTables.crossoverSteam( ...
                 sig.srho, s.rcro, sig.eip, s.hrho);
             sig.wlp = P.klp*sqrt(s.rcro*sig.pcro);
             sig.pcn = P.k0pcn + P.k1pcn*sig.pcro + P.k2pcn*sig.pcro*sig.pcro;
             sig.qylpo = P.kqylpo;
             [sig.hlpo, sig.rlpo, sig.slpo, sig.tcn, sig.rcno, sig.hcno] = ...
-                usoro.SteamTables.condenser(sig.pcn, sig.qylpo);
+                model.SteamTables.condenser(sig.pcn, sig.qylpo);
             keip = 0.93;
             kelp = 0.93;
             sig.mwhp = sig.whp*(s.hsso - sig.hhpo)*P.kj;
@@ -110,7 +110,7 @@ classdef PowerPlant < handle
             sig.mwgn = sig.mwgnpu*P.kmwr;
             sig.mwtrpu = sig.mwtro/P.kmwr;
             [sig.w2hhs, sig.w3hhs, sig.h2hhs1, sig.p2hhs, sig.p3hhso] = ...
-                usoro.Turbomachinery.ipExtraction(sig.wip, sig.prho, sig.pcro, s.hrho, sig.hcro);
+                model.Turbomachinery.ipExtraction(sig.wip, sig.prho, sig.pcro, s.hrho, sig.hcro);
             sig.wipftx = u.wft;
             if sig.wssx > P.kn0
                 sig.wipftx = P.kn0;
@@ -122,19 +122,19 @@ classdef PowerPlant < handle
             % Condensate, feedwater and recirculation flow networks.
             P = obj.par;
             [sig.wcw, sig.wcp, sig.pcpo, sig.plho, sig.wlhx, sig.wdvo, sig.ecp] = ...
-                usoro.Hydraulics.condensate(sig.pcn, sig.rcno, sig.rdvo, ...
+                model.Hydraulics.condensate(sig.pcn, sig.rcno, sig.rdvo, ...
                 sig.pdes, s.ncp, u.adv, P.kncp);
-            [sig.hcpo, sig.tcpo] = usoro.SteamTables.condensatePumpOutlet(sig.rcno, sig.pcpo);
-            [sig.rlho, sig.tlho] = usoro.SteamTables.condensateWater(s.hlho, sig.plho);
+            [sig.hcpo, sig.tcpo] = model.SteamTables.condensatePumpOutlet(sig.rcno, sig.pcpo);
+            [sig.rlho, sig.tlho] = model.SteamTables.condensateWater(s.hlho, sig.plho);
             [sig.wfp, sig.wfw, sig.wfw2, sig.pbpo, sig.pfpo, sig.pfvo, ...
-                sig.phho, sig.pfvd, sig.efp] = usoro.Hydraulics.feedwater( ...
+                sig.phho, sig.pfvd, sig.efp] = model.Hydraulics.feedwater( ...
                 u.wry, u.wsy, sig.rdew, sig.pdes, sig.pdrs, sig.reco, u.afv, s.nfp);
-            [sig.hfpo, sig.tfpo] = usoro.SteamTables.feedpumpOutlet(sig.rdew, sig.pfpo);
+            [sig.hfpo, sig.tfpo] = model.SteamTables.feedpumpOutlet(sig.rdew, sig.pfpo);
             sig.hfvo = sig.hfpo;
-            [sig.rhho, sig.thho] = usoro.SteamTables.feedwater(s.hhho, sig.phho);
+            [sig.rhho, sig.thho] = model.SteamTables.feedwater(s.hhho, sig.phho);
             sig.rdc = sig.rdrw;
             [sig.wrw, sig.wrp, sig.wwwo, sig.pdco, sig.prpo, sig.erp] = ...
-                usoro.Hydraulics.recirculation(P.knrp, sig.rdc, sig.rdrw, s.nrp, sig.pdrs);
+                model.Hydraulics.recirculation(P.knrp, sig.rdc, sig.rdrw, s.nrp, sig.pdrs);
         end
 
         function sig = mixingAndHeaters(obj, s, u, sig)
@@ -144,20 +144,20 @@ classdef PowerPlant < handle
             sig.hdc1 = (sig.wfw*s.heco + sig.hdrw*(sig.wrw - sig.wfw))/sig.wrw;
             sig.hss1 = ((sig.wpso - sig.wpsx)*s.hpso + u.wsy*sig.hfpo)/sig.wss1;
             sig.hrh1 = (sig.whpo*sig.hhpo + u.wry*sig.hfpo)/sig.wrh1;
-            [sig.rdc1, sig.tdc1] = usoro.SteamTables.feedwater(sig.hdc1, sig.pdrs);
-            [sig.hdco, sig.tdco, sig.sdco] = usoro.SteamTables.recircWater(sig.rdc1, sig.pdco);
-            [sig.hrpo, sig.trco, sig.srpo] = usoro.SteamTables.recircWater(sig.rdc1, sig.prpo);
-            [sig.rss1, sig.tss1, sig.sss1] = usoro.SteamTables.superheatSprayMix(sig.hss1, sig.ppso);
-            [sig.rrh1, ~, ~] = usoro.SteamTables.reheatSprayMix(sig.hrh1, sig.phpo);
+            [sig.rdc1, sig.tdc1] = model.SteamTables.feedwater(sig.hdc1, sig.pdrs);
+            [sig.hdco, sig.tdco, sig.sdco] = model.SteamTables.recircWater(sig.rdc1, sig.pdco);
+            [sig.hrpo, sig.trco, sig.srpo] = model.SteamTables.recircWater(sig.rdc1, sig.prpo);
+            [sig.rss1, sig.tss1, sig.sss1] = model.SteamTables.superheatSprayMix(sig.hss1, sig.ppso);
+            [sig.rrh1, ~, ~] = model.SteamTables.reheatSprayMix(sig.hrh1, sig.phpo);
             [sig.w1lhs, sig.w2lhs, sig.wdex, sig.wlhst, sig.p1lhs, sig.p2lhs, ...
                 sig.p3lhs, sig.h1lhs1, sig.h2lhs1, sig.hdex] = ...
-                usoro.Turbomachinery.lpExtraction(sig.wlp, sig.pcro, sig.pcn, sig.hcro, sig.hlpo);
-            [sig.h1lhso, sig.r1lhso, sig.t1lhso] = usoro.SteamTables.heaterSteamSat(sig.p1lhs);
-            [sig.h2lhso, sig.r2lhso, sig.t2lhso] = usoro.SteamTables.heaterWaterSat(sig.p2lhs);
-            [sig.h3lhso, sig.r3lhso, sig.t3lhso] = usoro.SteamTables.heaterWaterSat(sig.p3lhs);
+                model.Turbomachinery.lpExtraction(sig.wlp, sig.pcro, sig.pcn, sig.hcro, sig.hlpo);
+            [sig.h1lhso, sig.r1lhso, sig.t1lhso] = model.SteamTables.heaterSteamSat(sig.p1lhs);
+            [sig.h2lhso, sig.r2lhso, sig.t2lhso] = model.SteamTables.heaterWaterSat(sig.p2lhs);
+            [sig.h3lhso, sig.r3lhso, sig.t3lhso] = model.SteamTables.heaterWaterSat(sig.p3lhs);
             sig.qlh = sig.w1lhs*(sig.h1lhs1 - sig.h3lhso) + sig.w2lhs*(sig.h2lhs1 - sig.h2lhso);
             sig.whhst = sig.w1hhs + sig.w2hhs + sig.w3hhs;
-            [sig.h3hhso, sig.r3hhso, sig.t3hhso] = usoro.SteamTables.heaterSteamSat(sig.p3hhso);
+            [sig.h3hhso, sig.r3hhso, sig.t3hhso] = model.SteamTables.heaterSteamSat(sig.p3hhso);
             sig.qhh = sig.w1hhs*sig.hhpo + sig.w2hhs*sig.h2hhs1 + sig.w3hhs*sig.hcro ...
                 - sig.whhst*sig.h3hhso;
             sig.whhs = sig.whhst;
@@ -175,12 +175,12 @@ classdef PowerPlant < handle
                 s.hhho, s.heco, sig.pcpo, sig.plho);
             [sig.phhe, sig.hhhe, sig.hlhe] = obj.avg3(sig.pfvo, sig.phho, ...
                 sig.hfvo, s.hhho, sig.hcpo, s.hlho);
-            [sig.ppse, sig.tpse, sig.spse] = usoro.SteamTables.superheatedSteam(sig.rpse, sig.hpse);
-            [sig.psse, sig.tsse, sig.ssse] = usoro.SteamTables.superheatedSteam(sig.rsse, sig.hsse);
-            [sig.prhe, sig.trhe, sig.srhe] = usoro.SteamTables.reheatSteam(sig.rrhe, sig.hrhe);
-            [sig.rece, sig.tece] = usoro.SteamTables.feedwater(sig.hece, sig.pece);
-            [sig.rhhe, sig.thhe] = usoro.SteamTables.feedwater(sig.hhhe, sig.phhe);
-            [sig.rlhe, sig.tlhe] = usoro.SteamTables.condensateWater(sig.hlhe, sig.plhe);
+            [sig.ppse, sig.tpse, sig.spse] = model.SteamTables.superheatedSteam(sig.rpse, sig.hpse);
+            [sig.psse, sig.tsse, sig.ssse] = model.SteamTables.superheatedSteam(sig.rsse, sig.hsse);
+            [sig.prhe, sig.trhe, sig.srhe] = model.SteamTables.reheatSteam(sig.rrhe, sig.hrhe);
+            [sig.rece, sig.tece] = model.SteamTables.feedwater(sig.hece, sig.pece);
+            [sig.rhhe, sig.thhe] = model.SteamTables.feedwater(sig.hhhe, sig.phhe);
+            [sig.rlhe, sig.tlhe] = model.SteamTables.condensateWater(sig.hlhe, sig.plhe);
         end
 
         function sig = airGasSide(obj, s, u, sig)
@@ -188,7 +188,7 @@ classdef PowerPlant < handle
             P = obj.par;
             [sig.war, sig.wwwg, sig.wfd, sig.wgo, sig.wid, sig.pahao, sig.pfdo, ...
                 sig.pfn, sig.pecgo, sig.papgo, sig.pido, sig.efd, sig.eid] = ...
-                usoro.Hydraulics.airGas(P.knfd, P.knid, s.nfd, s.nid, ...
+                model.Hydraulics.airGas(P.knfd, P.knid, s.nfd, s.nid, ...
                 u.wgr, u.wfl, u.avf, u.avi);
             sig.tahao = P.ktat + P.ktahad;
             sig.tapao = sig.tahao + P.ktapad;
@@ -201,7 +201,7 @@ classdef PowerPlant < handle
             sig.uwwgm = P.kuwwgm*sig.uxgg*sig.ungg;
             sig.tgr = P.k1tgr + P.k2tgr*u.wfl;
             [sig.tfn1, sig.twwge, sig.twwgo, sig.qwwgm, sig.qpsr, sig.swwgo] = ...
-                usoro.HeatTransfer.furnace(s.twwm, sig.wwwg, sig.war, P.sar, ...
+                model.HeatTransfer.furnace(s.twwm, sig.wwwg, sig.war, P.sar, ...
                 sig.tapao, u.wfl, P.sfl, P.tfl, P.khfl, P.efl, u.wgr, P.sgr, ...
                 sig.tgr, sig.uwwgm, P.ywgr, sig.tpse, P.kupsr);
             sig.qwwmw = P.kuwwmw*(s.twwm - sig.tdrs)^3;
@@ -210,13 +210,13 @@ classdef PowerPlant < handle
             sig.qssr = P.kn0;
             sig.qrhr = P.kn0;
             sig.qecr = P.kn0;
-            [sig.tpsgo, sig.qps, sig.tpsme, sig.spsgo] = usoro.HeatTransfer.convective( ...
+            [sig.tpsgo, sig.qps, sig.tpsme, sig.spsgo] = model.HeatTransfer.convective( ...
                 sig.wwwg, sig.wpse, P.kupsgm, P.kupsms, sig.tpse, sig.twwgo, sig.qpsr, P.ywgr);
-            [sig.tssgo, sig.qss, sig.tssme, sig.sssgo] = usoro.HeatTransfer.convective( ...
+            [sig.tssgo, sig.qss, sig.tssme, sig.sssgo] = model.HeatTransfer.convective( ...
                 sig.wwwg, sig.wsse, P.kussgm, P.kussms, sig.tsse, sig.tpsgo, sig.qssr, P.ywgr);
-            [sig.trhgo, sig.qrh, sig.trhme, sig.srhgo] = usoro.HeatTransfer.convective( ...
+            [sig.trhgo, sig.qrh, sig.trhme, sig.srhgo] = model.HeatTransfer.convective( ...
                 sig.wwwg, sig.wrhe, P.kurhgm, P.kurhms, sig.trhe, sig.tssgo, sig.qrhr, P.ywgr);
-            [sig.tecgo, sig.qec, sig.tecme, sig.secgo] = usoro.HeatTransfer.convective( ...
+            [sig.tecgo, sig.qec, sig.tecme, sig.secgo] = model.HeatTransfer.convective( ...
                 sig.wwwg, sig.wfw, P.kuecgm, P.kuecmw, sig.tece, sig.trhgo, sig.qecr, P.ywgr);
             sig.tlhme = P.klhm*sig.tlho;
             sig.thhme = P.khhm*sig.thho;
@@ -250,7 +250,7 @@ classdef PowerPlant < handle
             sig.hwwo = sig.hrpo + sig.qwwmw/sig.wwwo;
             sig.qyww = (sig.qwwmw + sig.wrw*(sig.hrpo - sig.hdrw))/(sig.wrw*sig.hdrd);
             [sig.wderp, sig.wdewh, sig.wdebd, sig.hderp, sig.hdewh] = ...
-                usoro.VesselDynamics.deaeratorSteam(sig.wdrs, sig.whp);
+                model.VesselDynamics.deaeratorSteam(sig.wdrs, sig.whp);
             sig.hdebd = sig.hdes;
             sig.wdrbd = P.kn2*sig.wdebd;
             sig.wdesr = sig.wderp + sig.wdewh + sig.wdebd;
@@ -261,10 +261,10 @@ classdef PowerPlant < handle
             sig.z226 = sig.wdvo + sig.whhs + sig.wdex + sig.wdesr - sig.wfp;
             sig.z229 = sig.wdvo*s.hlho + sig.whhs*sig.h3hhso + sig.wdex*sig.hdex ...
                 + sig.qdesr - sig.wfp*sig.hdew;
-            [sig.f1dr, sig.f2dr] = usoro.VesselDynamics.saturatedVessel(P.kvdr, ...
+            [sig.f1dr, sig.f2dr] = model.VesselDynamics.saturatedVessel(P.kvdr, ...
                 s.vdrw, s.rdrs, sig.rdrw, sig.hdrw, sig.hdrs, ...
                 P.k2, P.k3, P.k5, P.k6, P.k7, P.k9, P.k10, sig.z206, sig.z209);
-            [sig.f1de, sig.f2de] = usoro.VesselDynamics.saturatedVessel(P.kvde, ...
+            [sig.f1de, sig.f2de] = model.VesselDynamics.saturatedVessel(P.kvde, ...
                 s.vdew, s.rdes, sig.rdew, sig.hdew, sig.hdes, ...
                 P.k22, P.k23, P.k25, P.k26, P.k27, P.k29, P.k30, sig.z226, sig.z229);
             sig.wlpo = sig.wlp - sig.wlhst - sig.wdex;
@@ -273,19 +273,19 @@ classdef PowerPlant < handle
         function sig = machines(obj, s, u, sig)
             % Prime-mover torques, level fits and first-stage pressure.
             P = obj.par;
-            [sig.tqrp1, sig.mwrp1] = usoro.Turbomachinery.inductionMotor( ...
+            [sig.tqrp1, sig.mwrp1] = model.Turbomachinery.inductionMotor( ...
                 sig.nelec, sig.velec, P.knrpm, s.nrp, P.krpm, P.srpmax);
-            [sig.tqcp1, sig.mwcp1] = usoro.Turbomachinery.inductionMotor( ...
+            [sig.tqcp1, sig.mwcp1] = model.Turbomachinery.inductionMotor( ...
                 sig.nelec, sig.velec, P.kncpm, s.ncp, P.kcpm, P.scpmax);
-            [sig.tqfd1, sig.mwfd1] = usoro.Turbomachinery.inductionMotor( ...
+            [sig.tqfd1, sig.mwfd1] = model.Turbomachinery.inductionMotor( ...
                 sig.nelec, sig.velec, P.knfdm, s.nfd, P.kfdm, P.sfdmax);
-            [sig.tqid1, sig.mwid1] = usoro.Turbomachinery.inductionMotor( ...
+            [sig.tqid1, sig.mwid1] = model.Turbomachinery.inductionMotor( ...
                 sig.nelec, sig.velec, P.knidm, s.nid, P.kidm, P.sidmax);
             sig.hft1 = sig.hcro;
             if sig.wssx > P.kn0
                 sig.hft1 = s.hsso;
             end
-            [sig.tqfp1, sig.mwfp1] = usoro.Turbomachinery.feedpumpTurbine(u.wft, sig.hft1, s.nfp);
+            [sig.tqfp1, sig.mwfp1] = model.Turbomachinery.feedpumpTurbine(u.wft, sig.hft1, s.nfp);
             sig.xdew = P.k1xdew + P.k2xdew*s.vdew + P.k3xdew*s.vdew*s.vdew;
             sig.xdrw = P.k1xdrw + P.k2xdrw*s.vdrw + P.k3xdrw*s.vdrw*s.vdrw;
             sig.phhd = sig.pfpo - sig.phho;

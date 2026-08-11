@@ -12,7 +12,7 @@ classdef ControlSystem < handle
 %   converts between physical ranges and that scale with saturation.
 
     properties (SetAccess = immutable)
-        par usoro.Parameters
+        par model.Parameters
     end
 
     properties
@@ -32,7 +32,7 @@ classdef ControlSystem < handle
     methods
         function obj = ControlSystem(par)
             arguments
-                par (1,1) usoro.Parameters = usoro.Parameters()
+                par (1,1) model.Parameters = model.Parameters()
             end
             obj.par = par;
         end
@@ -42,31 +42,31 @@ classdef ControlSystem < handle
             %   Also returns the limited copies of the demand states, which
             %   the demand-lag derivatives use as their feedback terms.
             P = obj.par;
-            xd = @usoro.ControlSystem.xducer;
-            u.card = usoro.ControlSystem.limchk(s.card);
+            xd = @model.ControlSystem.xducer;
+            u.card = model.ControlSystem.limchk(s.card);
             u.avf = xd(P.kcl, P.kcu, P.kavl, P.kavu, u.card);
-            u.cfld = usoro.ControlSystem.limchk(s.cfld);
+            u.cfld = model.ControlSystem.limchk(s.cfld);
             u.wfl = xd(P.kcl, P.kcu, P.kwfll, P.kwflu, u.cfld);
-            u.cfnd = usoro.ControlSystem.limchk(s.cfnd);
+            u.cfnd = model.ControlSystem.limchk(s.cfnd);
             u.avi = xd(P.kcl, P.kcu, P.kavl, P.kavu, u.cfnd);
             % gas recirculation demand is ceiling-limited by the fuel flow
-            u.cgrd = usoro.ControlSystem.limchk(s.cgrd);
+            u.cgrd = model.ControlSystem.limchk(s.cgrd);
             kwgr = P.kc2gr*u.wfl;
             kcwgr = xd(P.kwgrl, P.kwgru, P.kcl, P.kcu, kwgr);
-            u.cgrd = usoro.ControlSystem.check(u.cgrd, kcwgr, P.kcl);
+            u.cgrd = model.ControlSystem.check(u.cgrd, kcwgr, P.kcl);
             u.wgr = xd(P.kcl, P.kcu, P.kwgrl, P.kwgru, u.cgrd);
-            u.cftd = usoro.ControlSystem.limchk(s.cftd);
+            u.cftd = model.ControlSystem.limchk(s.cftd);
             u.wft = xd(P.kcl, P.kcu, P.kwftl, P.kwftu, u.cftd);
-            u.cfwd = usoro.ControlSystem.limchk(s.cfwd);
+            u.cfwd = model.ControlSystem.limchk(s.cfwd);
             u.afv = xd(P.kcl, P.kcu, P.kavl, P.kavu, u.cfwd);
-            u.cdwd = usoro.ControlSystem.limchk(s.cdwd);
+            u.cdwd = model.ControlSystem.limchk(s.cdwd);
             u.adv = xd(P.kcl, P.kcu, P.kavl, P.kavu, u.cdwd);
-            u.cxggd = usoro.ControlSystem.limchk(s.cxggd);
+            u.cxggd = model.ControlSystem.limchk(s.cxggd);
             cry = P.kc1ry*u.cxggd;
             u.wry = xd(P.kcryl, P.kcryu, P.kwryl, P.kwryu, cry);
             u.xgg = xd(P.kcl, P.kcu, P.kxggl, P.kxggu, u.cxggd);
             u.zxgg = u.xgg*57.3;
-            u.csyd = usoro.ControlSystem.limchk(s.csyd);
+            u.csyd = model.ControlSystem.limchk(s.csyd);
             csy = u.csyd*P.kc4sy;
             u.wsy = xd(P.kcsyl, P.kcsyu, P.kwsyl, P.kwsyu, csy);
             u.agv = xd(P.kn0, P.kn5, P.kavl, P.kavu, s.cacvd);
@@ -77,9 +77,9 @@ classdef ControlSystem < handle
         function xdot = derivatives(obj, s, u, sig, ldc)
             %DERIVATIVES Control-state derivatives (states 23-46).
             P = obj.par;
-            xd = @usoro.ControlSystem.xducer;
-            lim = @usoro.ControlSystem.limchk;
-            chk = @usoro.ControlSystem.check;
+            xd = @model.ControlSystem.xducer;
+            lim = @model.ControlSystem.limchk;
+            chk = @model.ControlSystem.check;
             xdot = zeros(47, 1);
 
             % boiler master demand (throttle pressure control)

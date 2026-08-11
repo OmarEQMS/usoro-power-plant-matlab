@@ -1,8 +1,8 @@
 function gen_parameters
-%GEN_PARAMETERS Regenerate src/+usoro/Parameters.m from the legacy scripts.
+%GEN_PARAMETERS Regenerate src/+model/Parameters.m from the legacy scripts.
 %   Runs the legacy constant scripts (src/old: diginit100, const1..const3)
 %   and emits every plant/control constant as a literal property default of
-%   usoro.Parameters. Simulation setup, state values, scenario inputs and
+%   model.Parameters. Simulation setup, state values, scenario inputs and
 %   logging variables are excluded. Re-run this tool whenever the legacy
 %   constant scripts change.
 
@@ -30,7 +30,7 @@ skip = {'thisdir','srcdir','names','ans', ...
     'fc2dv','fcp1st','fctrho','fcxgg'};
 names = setdiff(names, skip);
 
-outfile = fullfile(srcdir, '+usoro', 'Parameters.m');
+outfile = fullfile(srcdir, '+model', 'Parameters.m');
 fid = fopen(outfile, 'w');
 assert(fid > 0, 'cannot open %s', outfile);
 cleaner = onCleanup(@() fclose(fid));
@@ -58,7 +58,7 @@ for i = 1:numel(names)
         % gc it gives H ~ 2.7 s (physical), and reproduces the thesis Test-6
         % ride-through, which is impossible with the as-listed value (the
         % swing pair loses synchronism). Tests 1 and 5 are insensitive to
-        % kjtre. See docs/model_oop.md, "The kjtre units correction".
+        % kjtre. See docs/model.md, "The kjtre units correction".
         fprintf(fid, '        %s = %.17g/32.174; %% corrected, see header of this property\n', ...
             names{i}, v);
     else

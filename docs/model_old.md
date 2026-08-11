@@ -3,7 +3,7 @@
 > **Note:** the code documented here now lives in `src/old/` and is kept as
 > reference. The current, object-oriented implementation (validated
 > bit-for-bit against `src/old/digpte47.m`) is documented in
-> [model_oop.md](model_oop.md).
+> [model.md](model.md).
 
 Reference: P. B. Usoro, *Modeling and Simulation of a Drum Boiler-Turbine Power
 Plant Under Emergency State Control*, M.S. thesis, MIT, May 1977
@@ -216,7 +216,7 @@ inertia constant (H ≈ 88 s) and makes the swing pair lose synchronism under
 the thesis's own frequency-ramp test; it is evidently a WR² in lbm·ft²
 needing division by g_c = 32.174. The legacy code here keeps the
 as-listed value; the OOP model applies the correction — see
-[model_oop.md](model_oop.md), "The kjtre units correction".
+[model.md](model.md), "The kjtre units correction".
 
 ## Validation of the un-frozen model (Test 1)
 

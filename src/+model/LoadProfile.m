@@ -5,9 +5,9 @@ classdef LoadProfile
 %   plant or control classes.
 %
 %   Examples:
-%     prof = usoro.LoadProfile.test1();          % thesis Test 1 ramp
-%     prof = usoro.LoadProfile.constant(5);      % hold 100% load
-%     prof = usoro.LoadProfile(@(t) myLdc(t));   % custom scenario
+%     prof = model.LoadProfile.test1();          % thesis Test 1 ramp
+%     prof = model.LoadProfile.constant(5);      % hold 100% load
+%     prof = model.LoadProfile(@(t) myLdc(t));   % custom scenario
 
     properties (SetAccess = immutable)
         demandFcn (1,1) function_handle = @(t) 5.0
@@ -31,12 +31,12 @@ classdef LoadProfile
         function obj = test1()
             %TEST1 Thesis V.1: 10 s steady, then ramp 100% -> 77.5% at
             %   15%/min (ldc 5 -> 3.875 over 90 s), then hold.
-            obj = usoro.LoadProfile(@(t) 5.0 - 0.0125*max(0, min(t, 100) - 10));
+            obj = model.LoadProfile(@(t) 5.0 - 0.0125*max(0, min(t, 100) - 10));
         end
 
         function obj = constant(level)
             %CONSTANT Fixed LDC signal (1-5 V scale).
-            obj = usoro.LoadProfile(@(t) level);
+            obj = model.LoadProfile(@(t) level);
         end
     end
 end

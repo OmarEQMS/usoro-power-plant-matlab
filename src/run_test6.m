@@ -7,11 +7,11 @@
 %   deactivated, as in the thesis run (p. 58). Requires the trimmed 77.5%
 %   operating point (run src/tools/trim_op775.m once).
 
-par = usoro.Parameters();
-ctrl = usoro.ControlSystem(par);
+par = model.Parameters();
+ctrl = model.ControlSystem(par);
 ctrl.gasRecircEnabled = false;
-sim = usoro.Simulator(usoro.PowerPlant(par), ctrl, ...
-                      usoro.LoadProfile.constant(3.875), ...
-                      usoro.GridProfile.test6());
-res = sim.run(usoro.InitialConditions.at775(), 700);
-usoro.Simulator.plotStandard(res);
+sim = model.Simulator(model.PowerPlant(par), ctrl, ...
+                      model.LoadProfile.constant(3.875), ...
+                      model.GridProfile.test6());
+res = sim.run(model.InitialConditions.at775(), 700);
+model.Simulator.plotStandard(res);

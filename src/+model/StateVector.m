@@ -57,7 +57,7 @@ classdef StateVector
     methods (Static)
         function s = unpack(x)
             %UNPACK Map a 47x1 state vector onto a struct with named fields.
-            n = usoro.StateVector.names();
+            n = model.StateVector.names();
             for k = 1:47
                 s.(n{k}) = x(k);
             end
