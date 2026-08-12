@@ -33,6 +33,12 @@ srpmax=0.05; kncpm=2.0; kcpm=615.533e-6; scpmax=0.05;
 knfdm=6.0; kfdm=4.1e-3; sfdmax=0.05; knidm=4.0;
 kidm=6.16e-3; sidmax=0.05;
 % rotor inertia;
+% NOTE: kjtre=625000 is kept exactly as listed in the thesis data deck, but
+% it is WR^2 in lbm*ft^2, not a slug*ft^2 inertia (as-listed it gives an
+% unphysical H ~ 88 s and Test 6 pole-slips). The OOP model corrects it to
+% 625000/32.174 in src/tools/gen_parameters.m -- do NOT "fix" the value
+% here, or the correction would be applied twice. See docs/model.md,
+% "The kjtre units correction".
 kjtre=625000.0; kjfpe=2161.7; kjrp=576.1; kjcp=468.0;
 kjfd=181900.0; kjid=188000.0;
 % miscellaneous

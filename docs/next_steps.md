@@ -5,69 +5,90 @@ all of them: `model.md` (current model, validation results, known offsets),
 `model_old.md` (legacy code and the crstat/kjtre findings),
 `thesis_notes.md` (thesis summary and FORTRAN-listing landmarks).
 
-**Must-haves** (protect the correctness of what already exists):
+**Status of the former must-haves** (all completed Aug 11, 2026):
 
-- the *verification* half of investigation 1 below (checks 1–2: constants
-  vs. the thesis data deck, reheat set-point check) — this project has
-  already caught two transcription/units bugs, and the partial-load offset
-  has the fingerprint of a third (exact at the 100% anchor point, growing
-  away from it); until those constants are verified, capability results
-  (Test 4's ≈485 MW ceiling, Test 6's ≈470 MW settle) are provisional;
-- the **permanent regression harness** (item 3a) — the bit-for-bit
-  equivalence proof currently exists only in a past working session and is
-  unverifiable after any future edit without it;
-- the **`kjtre` comment in `src/old/const1.m`** (item 3b) — guards against
-  a silent double-correction if anyone "fixes" the legacy value
-  (`gen_parameters.m` applies the /32.174 itself).
+- constants verification and reheat set-point check — done, results folded
+  into investigation 1 below and `model.md` "Known quantitative offsets";
+- permanent regression harness — `src/tools/validate_against_legacy.m`
+  (127 sample points + dual-RK4 run, all exact; also guards both halves of
+  the kjtre correction contract). Run it after any edit to `+model` or
+  `src/old`;
+- `kjtre` comment in `src/old/const1.m` — in place.
 
-Everything else is an extension: valuable, but nothing breaks without it.
+## 1. The uniform fuel/air offset (main investigation)
 
-## 1. The partial-load fuel / gas-recirculation offset (main investigation)
+**Symptom (restated after the Aug 2026 verification session).** The model
+needs ≈10% more fuel and air than the thesis's published steady states to
+hold the same steam conditions, at every load — not, as first thought,
+only at partial load:
 
-**Symptom.** At the trimmed 77.5% operating point the corrected model burns
-more fuel and recirculates more flue gas than the thesis run:
-
-| Signal (77.5%) | This model | Thesis (Fig. V.9 / Table V.2) |
+| Signal | This model | Thesis (Tables V.1–V.3) |
 |---|---|---|
-| Fuel demand `cfld` | ≈4.18 V (≈71.5 lb/s) | ≈3.81 V (63.3 lb/s) |
-| Gas recirc demand `cgrd` | ≈4.2 V (≈400 lb/s) | ≈3.70 V (≈337 lb/s) |
-| Air demand `card` | ≈4.0 V | ≈3.41 V |
+| Fuel at 77.5% trim | 69.6 lb/s (cfld 4.10 V) | 63.3 lb/s (3.81 V) |
+| Air at 77.5% trim | 1068.9 lb/s | 972.1 lb/s |
+| Air/fuel ratio | 15.35 | 15.36 (same) |
+| Fuel at 50% trim | 46.5 lb/s | ~42 (Table V.3 scaled) |
+| 100% self-trimmed | air rails at 5 V, sags to ≈2000 psia | holds 2415 psia at 80.1 lb/s |
 
-At 100% (thesis initial conditions) the model *is* in balance with the
-thesis fuel value (80 lb/s), so the offset grows toward partial load.
+The published 100% "match" (80.14 vs 80.1 lb/s) is the thesis ICs evaluated
+at t = 0; they are not an equilibrium of this model (residuals ~0.5 vs
+~1e-3 at the trimmed points). Every capability limit follows from this one
+offset: Test 4 tops out at ≈485 MW, Test 6 settles at ≈470 MW/1857 psia,
+and the self-trimmed 100% point saturates the same way.
 
-**Why it matters.** The extra recirculation loads the ID fans and the extra
-fuel demand sits closer to the 5 V rail, so every test that pushes toward
-maximum capability saturates early: Test 4 tops out at ≈485 MW instead of
-recovering to 600; Test 6 settles at ≈470 MW/1857 psia vs the thesis
-537/2125. Transient shapes and mechanisms match; the saturation margins
-don't.
+**Established (Aug 11, 2026), i.e. what the offset is *not*:**
 
-**Hypotheses and concrete checks:**
+- *Not a control-constant transcription bug.* Every constant in the tilt,
+  gas-recirc, reheat, superheat, boiler-master and transducer-range groups
+  matches the thesis data deck exactly, read from the scanned pages
+  (printed pp. 278–286), including the OCR-garbled gas-recirc block
+  (`KC1GR=0.004, KTC1GR=20, KC2GR=12, KC3GR=1`) and `K2NG=72.201`.
+- *Not the reheat loop misbehaving.* `trho` sits exactly on its (clamped)
+  schedule at all three trims; the tilt is neutral (|xgg| < 3°, inside the
+  ±5° deadband) and the recirc integrator is frozen at every trim.
+- *Not the gas-recirculation level.* The recirc steady value is
+  path-dependent within a narrow attractor band (≈355–385 lb/s at 77.5%;
+  re-seeded at the thesis's 337 or at the 100% value, the plant pumps it
+  back into the band). Fuel changes < 0.1% across the band — the recirc
+  offset is a *consequence* of the same heat balance, not a cause.
+- Appendix C schedules the reheat set point on `WSSO` where the program
+  listing uses `WHP` (we follow the listing); identical at steady state.
 
-1. **Reheat-side chain.** The crstat fix raised the cross-over enthalpy
-   (1210 → 1380 Btu/lb), changing the reheat/IP energy split. If the
-   reheater now runs cold relative to its set point, the tilt control
-   drives `cxggd` up and the recirc follows (`c1gr = cxggd − kcxgg`).
-   Check in a 77.5% steady run: does `trho` actually sit on its schedule
-   `ktrh = k1trh + k2trh·whp`? How far up is the tilt `xgg`?
-2. **Verify the tilt/recirc constants against the thesis data deck**
-   (OCR listing, lines ≈11400–12300 — beware the *Standard Model* deck
-   starting ≈12300 lists different values/units): `kcxgg`, `kc1ry`,
-   `kc1rh/kc2rh/kc3rh`, `k1tgr/k2tgr`, `k1xgg/k2xgg`, the gun-count
-   factors `k1ng..k5ng`/`kxwwe`, and `kuwwgm`. A single mistyped schedule
-   constant could explain the whole offset.
-3. **Energy-balance audit at 77.5%.** Tabulate `qps/qss/qrh/qec/qwwgm`
-   and the fuel heat input `wfl·khfl` at our trim vs what thesis Table V.2
-   implies (air 972 lb/s, fuel 63.3 lb/s). Identify which absorption is
-   low, forcing extra firing.
-4. **Recirc contribution isolation.** Re-trim 77.5% with
-   `ctrl.gasRecircEnabled = false` and compare fuel demand; quantifies how
-   much of the offset is the recirc loop reacting vs the base heat balance.
-5. **Fit-range check.** The `crstat`/`rhstat` polynomial fits are now
-   evaluated at a different cross-over regime (≈173 psia/709 °F). Spot-check
-   the fits against real steam tables there; a fit extrapolating poorly
-   would bias the reheat balance.
+**Where the ~110k Btu/s at 77.5% actually goes (open):** our absorbed
+fraction is 80.0% of fuel heat at 77.5% (thesis-implied ≈88%), and the
+stack-side gas temperature *rises* from 100% to 77.5% (1105 → 1124 R)
+because total furnace gas flow at 77.5% exceeds the 100% value. Remaining
+concrete checks, in order of promise:
+
+1. **Air/gas network verification (prime suspect).** At the exact thesis
+   100% IC state, `Hydraulics.airGas` delivers war = 1181.7 lb/s where
+   thesis Table V.1 reports 1230.3 (−4% at identical inputs). Verify the
+   `arflow` transcription line-by-line against the printed FORTRAN (OCR
+   has no ARFLOW header — find it in the listing; HXFER is at OCR line
+   ≈11078, AVERAG ≈11145) the way `crstat` was caught.
+2. **Furnace/convective chain verification.** Same treatment for
+   `HeatTransfer.furnace`/`convective` vs the printed listing (furnace
+   section in the main program ≈ OCR 9400–9600) — a crstat-class slip in
+   one absorption equation would explain the uniform deficit directly.
+3. **Energy-balance audit completion.** Account for the full gas-side
+   ledger at 77.5% (absorptions + stack loss + the fixed-temperature air
+   heater `ktat/ktahad/ktapad` treatment) and identify the sink that eats
+   the extra ~110k Btu/s relative to the thesis-implied balance.
+4. **Feedwater-heating degradation (secondary, ~1% of fuel).** Our `hhho`
+   falls faster with load than the thesis's (441.4 vs 454.1 Btu/lb at
+   77.5%; 411.7 vs 437.3 at 50%; exact at 100%). Suspect the extraction /
+   heater chain (`hpext`/`ipext`/`lpext` fits, `qhh` with the raised
+   `hcro`). Also the likely driver of the slow `heco`/`hhho` trim drift
+   (section 3).
+5. **Fit-range check (deprioritized).** `crstat`'s corrected cross-over
+   enthalpy (≈1380 Btu/lb at ≈173 psia/709 °F) is consistent with real
+   steam tables, so the fix itself is sound at the new regime; a broader
+   sweep of the 16 fits vs steam tables remains useful hygiene.
+
+If 1–3 come back clean, the remaining explanation is that the thesis's
+published tables/figures were produced with a different code or data-deck
+version than the printed listing — unfalsifiable except by exhausting the
+listing verification.
 
 ## 2. Coordinated Control Mode
 
@@ -90,27 +111,28 @@ mentions but never plots.
   bound whenever the pressure set point is unreachable (Tests 6, 7). Its
   limited copy is what acts, so behavior is correct, but a conditional
   integrator (stop integrating while `c4md` is clamped) would match the
-  analog hardware's saturation and keep states bounded.
+  analog hardware's saturation and keep states bounded. The gas-recirc
+  integrator `c2gr` can wind up the same way while the tilt is outside its
+  deadband.
 - **40% voltage-drop variant of Test 5:** thesis text (p. 55) says the
   condensate pumps then fail to meet demand and the deaerator level falls
   toward a trip — one line with `model.GridProfile` to reproduce.
-- **(3a) Permanent regression harness:** promote the session's A/B
-  validation into `src/tools/validate_against_legacy.m` (pointwise vs
-  `src/old/digpte47`, aware that `xdot(16)` differs by exactly 32.174).
-- **(3b) Comment in `src/old/const1.m`:** a comment-only note next to
-  `kjtre=625000.0` pointing at the units correction, so readers of the
-  legacy code aren't misled (no behavior change; keep the value as-listed
-  there — `gen_parameters.m` applies the correction and would double-apply
-  if the legacy value were changed).
 - **Slow trim drift:** the trim residuals never reach zero (`heco`/`hhho`
-  drift ~1e-3 at 50%). Establish whether this is a genuine very slow plant
-  mode or a small inconsistency between the economizer/heater fits.
+  drift ~1e-3 at 50%). Likely the same economizer/heater-chain imbalance
+  as investigation item 4 above.
+- **DYSYS TSTEP curiosity:** the thesis's run deck (printed p. 288) says
+  `TSTEP=0.4`, while the text (p. 49) describes RK4 at 0.1 s. Worth a note
+  if integration-step sensitivity ever comes up; RK4 at 0.1 s is what this
+  project uses throughout.
 
 ## 4. Larger optional builds
 
 - **Standard Model (27th order, thesis Appendix B):** the reduced
   analog-computer model — would allow reproducing the thesis's V.2/V.4/V.6/
-  V.8 comparison figures and give a fast model for control design.
+  V.8 comparison figures and give a fast model for control design. Beware:
+  its data deck (OCR lines ≈12300+) lists different values/units for
+  same-named constants (`KC2GR=0.8`, `KUWWGM=186.19`, and Appendix C's
+  `KUWWGM=73.801+1.4173*WFL`).
 - **Thesis Tests we cannot verify:** the remaining thesis materials
   (per-test driver code, coordinated-mode runs) are not in the scanned
   listings; any reproduction beyond Figs. V.1–V.11 is uncheckable.

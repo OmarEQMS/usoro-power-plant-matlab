@@ -205,14 +205,36 @@ stitches two phases at t = 10 s. Results track Figure V.11 closely:
 
 ## Known quantitative offsets
 
-The corrected model (crstat fix) burns more fuel and runs more gas
-recirculation at partial load than the thesis run (e.g. fuel demand ≈4.18 V
-at 77.5% vs ≈3.81 in Figure V.9), so it sits closer to the air/fuel signal
-rails. Tests that push toward maximum capability (4, 6, 7) therefore
-saturate earlier or settle deeper than the thesis figures, while their
-transient shapes and mechanisms match. Tests 1, 2, 3 and 5, which stay
-inside the control range, match quantitatively. The investigation plan for
-this offset is in [next_steps.md](next_steps.md).
+The model needs ≈10% more fuel and air than the thesis's published steady
+states to hold the same steam conditions, at *every* load — e.g. at the
+77.5% trim it burns 69.6 lb/s vs the thesis Table V.2's 63.3, with the
+air/fuel ratio identical (15.36) so the air offset is the same +10%. At
+100% the extra requirement exceeds the 5 V air rail, so the model cannot
+hold the 100% point steady at all (self-trimmed at ldc = 5 it sags to
+≈2000 psia; the published 100% "match" is just the thesis ICs evaluated at
+t = 0, which are not an equilibrium of this model — residuals ~0.5 there
+vs ~1e-3 at the trimmed points). Tests that push toward maximum capability
+(4, 6, 7) therefore saturate earlier or settle deeper than the thesis
+figures, while their transient shapes and mechanisms match. Tests 1, 2, 3
+and 5, which stay inside the control range, match quantitatively.
+
+An Aug 2026 verification session (see [next_steps.md](next_steps.md))
+established what the offset is *not*: every constant in the tilt,
+gas-recirculation, reheat, superheat and boiler-master chains matches the
+thesis data deck exactly (verified against the scanned pages, including
+the previously OCR-garbled gas-recirc gains), the reheat temperature sits
+exactly on its schedule at all three operating points, and the fuel level
+is insensitive to the gas-recirculation level (re-seeding the recirc
+integrator at the thesis value changes fuel by < 0.1%). The strongest
+remaining lead is the air/gas flow network: at the exact thesis 100% IC
+state our `Hydraulics.airGas` delivers 1181.7 lb/s of air where thesis
+Table V.1 reports 1230.3 (−4%).
+
+The gas-recirculation level itself is only loosely pinned by the plant:
+the recirc integrator acts only while the burner tilt is outside its ±5°
+deadband, so its steady value is path-dependent within a narrow band
+(≈355–385 lb/s at 77.5%; the thesis's 337 lb/s lies outside this model's
+band — re-seeded there, the plant pumps it back to ≈356).
 
 ## Electrical emergency tests (thesis Tests 5 and 6)
 
@@ -300,3 +322,11 @@ These A/B checks were run before the `kjtre` correction was adopted; with it,
 the only difference from the legacy derivative is `xdot(16)`, scaled by
 exactly the documented factor 32.174 (all other 46 components remain
 identical).
+
+The check is now permanent: **`src/tools/validate_against_legacy.m`**
+re-proves the equivalence on demand (127 sample points — the canonical ICs,
+the branch-exercising variants above, Test-1 trajectory samples and random
+perturbations of them — plus a 500-step dual-RK4 run, all exact; it also
+guards both halves of the kjtre contract: `src/old/const1.m` must stay
+as-listed at 625000 while `Parameters` ships 625000/32.174). Run it after
+any edit to `+model` or `src/old`; runtime ~1 min.
