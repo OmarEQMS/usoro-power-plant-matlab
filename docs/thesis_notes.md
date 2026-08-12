@@ -231,5 +231,5 @@ Porting gotchas learned the hard way:
   divided by g_c it gives H ≈ 2.7 s and matches. The other rotor inertias
   are validated as-listed by the Test-5 speed transients.
 - The undamped swing pair integrates stably under RK4 at 0.1 s but **not**
-  under explicit Euler — any port that degrades the integration scheme will be
-  forced to freeze `N_tr` (which is what happened in `pba1_240814bk.m`).
+  under explicit Euler — any port that degrades the integration scheme will
+  be forced to freeze `N_tr` to survive.

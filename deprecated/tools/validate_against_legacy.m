@@ -1,9 +1,10 @@
 function validate_against_legacy(opts)
 %VALIDATE_AGAINST_LEGACY Regression proof: OOP derivative == legacy digpte47.
 %   Permanent harness for the bit-for-bit equivalence claim of
-%   docs/model.md ("Validation vs the legacy implementation"). It compares
-%   model.Simulator.derivative against the legacy src/old/digpte47 at
-%   identical (t, x) and errors out on the first discrepancy:
+%   deprecated/README.md. It compares model.Simulator.derivative (the
+%   current model in src/+model) against the archived legacy
+%   deprecated/old/digpte47 at identical (t, x) and errors out on the
+%   first discrepancy:
 %
 %     1. With kjtre restored to the legacy as-listed 625000, all 47
 %        derivative components must match EXACTLY (zero difference) at
@@ -21,7 +22,7 @@ function validate_against_legacy(opts)
 %   (deterministic seed).
 %
 %   Also guards both halves of the kjtre correction contract:
-%   src/old/const1.m must still list 625000 (uncorrected) and
+%   deprecated/old/const1.m must still list 625000 (uncorrected) and
 %   model.Parameters must ship 625000/32.174 — a "fix" on either side
 %   would silently double- or un-apply the correction.
 %
@@ -37,20 +38,22 @@ arguments
     opts.sampleEvery (1,1) double {mustBePositive}    = 5
 end
 
-thisdir = fileparts(mfilename('fullpath'));   % .../src/tools
-srcdir  = fileparts(thisdir);                 % .../src
-prevPath = addpath(srcdir, fullfile(srcdir, 'old'));
+thisdir = fileparts(mfilename('fullpath'));   % .../deprecated/tools
+depdir  = fileparts(thisdir);                 % .../deprecated
+srcdir  = fullfile(fileparts(depdir), 'src'); % .../src
+prevPath = addpath(srcdir, fullfile(depdir, 'old'));
 restorePath = onCleanup(@() path(prevPath)); %#ok<NASGU>
 
 % --- kjtre correction contract (guards against double-correction) -------
 assert(legacyKjtre() == 625000, ...
-    ['src/old/const1.m no longer lists kjtre=625000. The legacy value ' ...
-     'must stay as-listed in the thesis deck; gen_parameters.m applies ' ...
-     'the /32.174 units correction (see docs/model.md).']);
+    ['deprecated/old/const1.m no longer lists kjtre=625000. The legacy ' ...
+     'value must stay as-listed in the thesis deck; ' ...
+     'deprecated/tools/gen_parameters.m applies the /32.174 units ' ...
+     'correction (see docs/model.md).']);
 par = model.Parameters();
 assert(par.kjtre == 625000/32.174, ...
     ['model.Parameters.kjtre is not 625000/32.174; the kjtre units ' ...
-     'correction was lost. Re-run src/tools/gen_parameters.m.']);
+     'correction was lost. Re-run deprecated/tools/gen_parameters.m.']);
 fprintf('kjtre contract: legacy 625000, Parameters 625000/32.174 ... OK\n');
 
 % Twin model with the legacy (uncorrected) kjtre: must match digpte47
@@ -144,8 +147,8 @@ fprintf('validate_against_legacy: ALL CHECKS PASSED\n');
 end
 
 function v = legacyKjtre()
-%LEGACYKJTRE kjtre exactly as src/old/const1.m sets it (script runs in
-%   this function's workspace, so nothing leaks to the caller).
+%LEGACYKJTRE kjtre exactly as deprecated/old/const1.m sets it (script runs
+%   in this function's workspace, so nothing leaks to the caller).
 const1
 v = kjtre;
 end

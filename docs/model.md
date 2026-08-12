@@ -1,41 +1,123 @@
-# OOP model — architecture and usage
+# Usoro Digital Model — architecture and usage
 
-Object-oriented MATLAB rewrite of the Usoro 47th-order Digital Model, living
-in the `src/+model` package. It supersedes the legacy flat-script code, which
-is preserved in `src/old` and documented in [model_old.md](model_old.md); the
-thesis background is in [thesis_notes.md](thesis_notes.md).
-
-The rewrite is **numerically faithful by construction**: every equation and
-constant is the same as the validated legacy `digpte47.m` (including the
-`crstat` fix), reorganized — not re-derived. The validation section below
-shows the OOP derivative is bit-for-bit identical to the legacy one.
+Object-oriented MATLAB implementation of the 47th-order Digital Model from
+Usoro's 1977 MIT thesis, living in the `src/+model` package. Every equation,
+fit and constant is transcribed from the thesis FORTRAN listing and data
+deck (the thesis background and listing landmarks are in
+[thesis_notes.md](thesis_notes.md)); two documented deviations from the
+as-printed deck are the `crstat` cross-over anchoring (an OCR-ambiguous
+line, resolved by the feed-pump torque balance — see
+`SteamTables.crossoverSteam`) and the `kjtre` units correction (section
+below).
 
 ## Package layout (`src/+model`)
 
-| Class | Kind | Role | Replaces (src/old) |
-|---|---|---|---|
-| `Parameters` | value, **generated** | all 306 plant/control constants as properties, thesis symbol names | `diginit100` (constants part), `const1`–`const3` |
-| `StateVector` | static | state indices, names, `unpack(x)` → named struct | the `x0(i)` equivalence blocks |
-| `InitialConditions` | static | canonical 100%-load state (thesis p. 288) | `diginit100` (state part) |
-| `SteamTables` | static | 16 water/steam property fits | `drstat`, `destat`, `shstat`, `rhstat`, `fwstat`, `cwstat`, `cpstat`, `fpstat`, `hpstat`, `crstat`, `cnstat`, `lsstat`, `lwstat`, `rwstat`, `systat`, `rystat` |
-| `Hydraulics` | static | closed-form flow-network solvers | `shflow`, `fwflow`, `cwflow`, `rwflow`, `arflow` |
-| `Turbomachinery` | static | extraction fits, motor and FP-turbine torque | `hpext`, `ipext`, `lpext`, `torque`, `fpturb` |
-| `HeatTransfer` | static | furnace radiant balance, convective exchangers | `fnxfer`, `hxfer` |
-| `VesselDynamics` | static | saturated-vessel balances, deaerator steam | `drum`, `destmr` |
-| `PowerPlant` | handle | physical process model: algebra + states 1–22, 47 | the process section of `digpte47` |
-| `ControlSystem` | handle | actuator transducers + the 11 loops: states 23–46 | the control section of `digpte47`; `xducer`, `limchk`, `check` |
-| `LoadProfile` | value | LDC demand `ldc(t)`; swappable scenarios | the hardcoded ramp in `digpte47` |
-| `GridProfile` | value | grid frequency `nelec(t)` and voltage `velec(t)`; enables the electrical emergency tests | (grid was fixed in the legacy code) |
-| `Simulator` | handle | RK4 integration, logging, `f(t,x)` assembly | `pba2_rk4` main loop |
+| Class | Kind | Role |
+|---|---|---|
+| `Parameters` | value, **generated** | all 306 plant/control constants as properties, thesis symbol names (thesis `CONST1`–`CONST3` + data deck) |
+| `StateVector` | static | state indices, names, `unpack(x)` → named struct |
+| `InitialConditions` | static | canonical 100%-load state (thesis p. 288) |
+| `SteamTables` | static | 16 water/steam property fits (thesis `*STAT` subroutines) |
+| `Hydraulics` | static | closed-form flow-network solvers (thesis `*FLOW` subroutines) |
+| `Turbomachinery` | static | extraction fits, motor and FP-turbine torque (`HPEXT`, `IPEXT`, `LPEXT`, `TORQUE`, `FPTURB`) |
+| `HeatTransfer` | static | furnace radiant balance, convective exchangers (`FNXFER`, `HXFER`) |
+| `VesselDynamics` | static | saturated-vessel balances, deaerator steam (`DRUM`, `DESTMR`) |
+| `PowerPlant` | handle | physical process model: algebra + states 1–22, 47 |
+| `ControlSystem` | handle | actuator transducers (`XDUCER`, `LIMCHK`, `CHECK`) + the 11 loops: states 23–46 |
+| `LoadProfile` | value | LDC demand `ldc(t)`; swappable scenarios |
+| `GridProfile` | value | grid frequency `nelec(t)` and voltage `velec(t)`; enables the electrical emergency tests |
+| `Simulator` | handle | RK4 integration, logging, `f(t,x)` assembly |
 
 Plus the `src/+test` package — `test.run1` … `test.run7`, one function per
 thesis test, each returning the simulation results — the dashboard
-(`src/PlantApp.m`, launcher `src/run_ui.m`) and two tools:
-`src/tools/gen_parameters.m` (regenerates `Parameters.m` from the legacy
-constant scripts — run it if `src/old/const*.m` ever change) and
+(`src/PlantApp.m`, launcher `src/run_ui.m`) and
 `src/tools/trim_operating_points.m` (generates the trimmed 77.5% and 50%
 operating points `+model/ic775.mat` / `+model/ic50.mat` needed by
 Tests 2–7).
+
+## State vector
+
+States 1–22 and 47 are the 23 physical states; 23–46 are the 24
+control-system states. Indices and helpers: `model.StateVector`.
+
+| # | Name | Unit | Description |
+|---|---|---|---|
+| 1 | `nfp` | rad/s | Boiler feed pump turbine speed (thesis p. 159) |
+| 2 | `hhho` | Btu/lb | HP feedwater heater outlet enthalpy (p. 161) |
+| 3 | `heco` | Btu/lb | Economizer outlet feedwater enthalpy |
+| 4 | `vdrw` | ft³ | Drum water volume |
+| 5 | `rdrs` | lb/ft³ | Drum steam density |
+| 6 | `nrp` | rad/s | Recirculation pump speed |
+| 7 | `twwm` | °R | Waterwall metal temperature |
+| 8 | `rpso` | lb/ft³ | Primary superheater outlet steam density |
+| 9 | `hpso` | Btu/lb | Primary superheater outlet enthalpy |
+| 10 | `rsso` | lb/ft³ | Secondary superheater outlet density |
+| 11 | `hsso` | Btu/lb | Secondary superheater outlet enthalpy (main steam) |
+| 12 | `rsco` | lb/ft³ | Steam chest density (governing stage) |
+| 13 | `rrho` | lb/ft³ | Reheater outlet steam density |
+| 14 | `hrho` | Btu/lb | Reheater outlet enthalpy |
+| 15 | `rcro` | lb/ft³ | Cross-over pipe steam density |
+| 16 | `ntr` | rad/s | Turbine–generator shaft speed (pp. 152–153) |
+| 17 | `ncp` | rad/s | Condensate pump speed |
+| 18 | `hlho` | Btu/lb | LP feedwater heater outlet enthalpy |
+| 19 | `vdew` | ft³ | Deaerator water volume |
+| 20 | `rdes` | lb/ft³ | Deaerator steam density |
+| 21 | `nfd` | rad/s | Forced-draft fan speed |
+| 22 | `nid` | rad/s | Induced-draft fan speed |
+| 47 | `delta` | rad | Generator power angle (swing equation, p. 153) |
+
+Control-system states (thesis Ch. IV): PI integrators `c3md` (23, boiler
+master), `c5ar` (24, air), `c5fl` (25, fuel), `c3fn` (26, furnace
+pressure), `c2gr` (27, gas recirculation), `c2ft` (28, FP turbine),
+`c3fv`/`c7fv` (29/30, feedwater level/flow), `c3dv`/`c8dv` (31/32,
+deaerator level), `c5rh` (33, reheat temperature), `c5sy` (34, superheat
+temperature), `c2tr` (44, load reference) and `c4tr` (45, load demand
+lag); first-order demand lags `card` (35, air → FD vanes `avf`), `cfld`
+(36, fuel → `wfl`), `cfnd` (37, furnace pressure → ID vanes `avi`),
+`cgrd` (38, gas recirc → `wgr`), `cftd` (39, FP-turbine steam → `wft`),
+`cfwd` (40, feedwater valve → `afv`), `cdwd` (41, deaerator valve →
+`adv`), `cxggd` (42, burner tilt → `xgg`), `csyd` (43, superheat spray →
+`wsy`) and `cacvd` (46, governor valve → `agv`).
+
+## Control loops (thesis Ch. IV)
+
+All controller signals live on a normalized 1–5 V scale (`limchk` clamps
+to [1, 5]; `xducer` converts between physical ranges and the control
+scale). The plant runs in **boiler-following mode**: the turbine takes the
+load (governor valves respond to load demand `ldc` and speed error), and
+the boiler master trims firing to restore throttle pressure (set point
+2415 psia).
+
+1. **Boiler master** (`c*md`): throttle pressure error → PI → common
+   demand for the air and fuel loops, with a speed-error assist term.
+2. **Air flow** (`c*ar`): cross-limited with fuel demand (takes the max)
+   → PI → `card` lag → FD fan inlet vanes.
+3. **Fuel flow** (`c*fl`): cross-limited with measured air flow (takes
+   the min — classic combustion cross-limits) → PI → `cfld` lag → fuel
+   valve.
+4. **Furnace pressure** (`c*fn`): furnace draft error + air-flow
+   feedforward → PI → `cfnd` lag → ID fan inlet vanes.
+5. **Gas recirculation** (`c*gr`): integrates while the burner tilt is
+   outside its ±5° deadband; sets recirculated gas flow (reheat
+   temperature support).
+6. **Feed pump turbine** (`c*ft`): holds feedwater-valve differential
+   pressure (`pfvd`) at set point via extraction steam flow `wft`.
+7. **Feedwater** (`c*fv`): three-element control — drum level (`xdrw`) PI
+   cascaded with steam-flow/feedwater-flow balance → feedwater valve
+   area `afv`.
+8. **Deaerator level** (`c*dv`): level PI plus condensate pressure/flow
+   trim → deaerator valve area `adv`.
+9. **Reheat temperature** (`c*rh`): reheater outlet temperature error →
+   PI → burner tilt demand `cxggd` (tilting the flames shifts the
+   furnace-radiation / convective-surface split).
+10. **Superheat temperature** (`c*sy`): main steam temperature error →
+    PI → desuperheater spray flow demand `csyd`.
+11. **Turbine / governor** (`c*tr`): load demand `ldc` vs generated power
+    PI (rate-limited load reference), plus proportional speed regulation
+    (droop `kcvreg`) → governor valve demand `cacvd`.
+
+Load-dependent set points (`ktrh`, `ktss`) are scheduled on HP steam flow
+`whp` and clamped to their operating bands.
 
 ## Data flow per derivative evaluation
 
@@ -135,8 +217,7 @@ res = sim.run(model.InitialConditions.at100(), 700);
 - **Control experiments:** subclass `ControlSystem` and override
   `derivatives` (or a future extracted per-loop method); the plant is
   untouched. The rate-feedforward stubs (`fc2dv`, `fcp1st`, `fctrho`,
-  `fcxgg` — the legacy "falta" items) are public properties, so a subclass
-  or script can supply them.
+  `fcxgg`) are public properties, so a subclass or script can supply them.
 - **Different integrator:** `Simulator.derivative(t,x)` is public and
   side-effect-free — hand it to `ode45`/`ode15s` directly if wanted
   (`[tt,xx] = ode45(@(t,x) sim.derivative(t,x), [0 700], x0)`), keeping in
@@ -146,12 +227,12 @@ res = sim.run(model.InitialConditions.at100(), 700);
 
 - **Thesis names preserved.** Constants (`kjtre`, `kupsgm`, …), signals
   (`wdrs`, `qwwgm`, …) and states keep their thesis/FORTRAN names so the
-  code cross-references directly against the thesis and `model_old.md`.
-  Classes and methods follow standard MATLAB style (PascalCase classes,
-  camelCase methods).
+  code cross-references directly against the thesis. Classes and methods
+  follow standard MATLAB style (PascalCase classes, camelCase methods).
 - **`Parameters` is generated, not hand-typed.** 306 constants transcribed
-  by hand would be a typo lottery; `tools/gen_parameters.m` extracts them
-  from the legacy scripts, keeping one source of truth.
+  by hand would be a typo lottery; the file is machine-generated and its
+  values were verified against the thesis data-deck scan (printed
+  pp. 275–286) in Aug 2026. Treat it as read-only data.
 - **Subroutine-local fit coefficients stay local** (in `Hydraulics`,
   `HeatTransfer`, etc.) exactly as they are subroutine-local in the thesis
   FORTRAN — they are curve-fit internals, not tunable plant parameters.
@@ -160,9 +241,11 @@ res = sim.run(model.InitialConditions.at100(), 700);
   subsystem structure is expressed as private methods over the shared `sig`
   bus. Splitting it into independently instantiated component objects would
   add indirection without decoupling anything real.
-- **RK4 at 0.1 s** replicates the thesis integration (DYSYS) and is stable
-  for the undamped turbine-generator swing pair — see
-  [model_old.md](model_old.md) for the frozen-speed history behind this.
+- **RK4 at 0.1 s** replicates the thesis integration (DYSYS, p. 49). The
+  turbine-generator swing pair is deliberately undamped (thesis
+  pp. 152–153), a marginally stable oscillator at ≈1.8 rad/s: RK4 is
+  (weakly) stable there, while explicit Euler diverges — do not swap in a
+  lower-order explicit scheme.
 
 ## Load-ramp tests (thesis Tests 2, 3, 4)
 
@@ -181,12 +264,8 @@ All at the thesis 15%/min rate, starting from the trimmed operating points:
   In this model the effect is stronger: governor and air demands rail at
   5 V, fuel is held back by the air cross-limit, and the plant tops out
   near **485 MW at ≈1906 psia** instead of recovering to 600 MW / 2415.
-  Mechanism: the crstat-fixed heat balance runs more gas recirculation
-  (reheat-side), which consumes ID-fan capacity, so the air ceiling binds
-  below rated firing when ramping up. See "Known quantitative offsets"
-  below.
-
-![Test 7 overview](img/test7_overview.png)
+  Mechanism: the model's ≈10% higher air/fuel requirement hits the 5 V
+  air rail below rated firing — see "Known quantitative offsets" below.
 
 ## Fan-loss test (thesis Test 7)
 
@@ -202,6 +281,8 @@ stitches two phases at t = 10 s. Results track Figure V.11 closely:
 | Main steam flow min / end | 685 / 749 lb/s | ≈690 / ≈770 |
 | Air control / governor | rail at 5 V | rail at 5 V |
 | Turbine speed | flat 377 | flat 377 |
+
+![Test 7 overview](img/test7_overview.png)
 
 ## Known quantitative offsets
 
@@ -267,10 +348,10 @@ transient matches quantitatively (power spike 562 MW vs ≈563; steam-flow
 peak 1043 lb/s vs ≈1040). The sustained depression is deeper than the
 thesis (settles ≈470 MW at ≈1857 psia vs 537 MW at 2125 psia) because this
 model's 77.5% operating point runs closer to the air/fuel signal rails
-(the crstat-fix heat-balance shift), so the frequency-limited fans cap
+(see "Known quantitative offsets"), so the frequency-limited fans cap
 firing at a lower level. Note the boiler-master integrator state (`c3md`)
 winds up without bound while the pressure set point is unreachable — its
-*limited* copy is what acts; the legacy model behaves identically.
+*limited* copy is what acts.
 
 ![Test 6 overview](img/test6_overview.png)
 
@@ -293,40 +374,21 @@ turbine-speed trace becomes even flatter (±0.01 rad/s) and the former slow
 swing-envelope growth disappears (the faster swing mode falls in RK4's
 strongly damped region).
 
-The correction is applied in `tools/gen_parameters.m` (and so survives
-regeneration); the *other* rotor inertias (`kjfpe`, `kjrp`, `kjcp`, `kjfd`,
-`kjid`) are kept as listed — Test 5 validates their values directly through
-the pump/fan slow-down time constants. The legacy code in `src/old` keeps
-the thesis-as-listed value.
+The correction is applied in the generated `Parameters.m`
+(`kjtre = 625000/32.174`); the *other* rotor inertias (`kjfpe`, `kjrp`,
+`kjcp`, `kjfd`, `kjid`) are kept as listed — Test 5 validates their values
+directly through the pump/fan slow-down time constants.
 
 ## Validation
 
-Against the legacy `digpte47.m` (itself validated against thesis Figure V.1
-and Tables V.1–V.2, see `model_old.md`):
-
-- **Pointwise:** `Simulator.derivative(t,x)` vs `digpte47(t,x)` at five
-  (t, x) combinations chosen to exercise both sides of every flow branch
-  (governor closed → `wtv < kwtv` steam-source switch; large burner tilt →
-  gas-recirculation deadband): **max relative difference 0.0 — bit-for-bit
-  identical** on all 47 derivative components.
-- **Full 700 s Test 1 run** with identical RK4 stepping: bit-for-bit
-  identical final state.
-
-| Check | Result |
-|---|---|
-| Derivative, 5 test points × 47 components | exact (max rel. diff 0.0) |
-| Final state after 7000 RK4 steps (28,000 evaluations) | exact (max rel. diff 0.0) |
-| Runtime, full 700 s Test 1 | OOP 18.4 s vs legacy 217.3 s (~12× faster — the legacy `digpte47` re-runs the constant scripts on every call; `Parameters` is constructed once) |
-
-These A/B checks were run before the `kjtre` correction was adopted; with it,
-the only difference from the legacy derivative is `xdot(16)`, scaled by
-exactly the documented factor 32.174 (all other 46 components remain
-identical).
-
-The check is now permanent: **`src/tools/validate_against_legacy.m`**
-re-proves the equivalence on demand (127 sample points — the canonical ICs,
-the branch-exercising variants above, Test-1 trajectory samples and random
-perturbations of them — plus a 500-step dual-RK4 run, all exact; it also
-guards both halves of the kjtre contract: `src/old/const1.m` must stay
-as-listed at 625000 while `Parameters` ships 625000/32.174). Run it after
-any edit to `+model` or `src/old`; runtime ~1 min.
+- **Constants:** all 306 `Parameters` values verified against the thesis
+  data-deck scan (printed pp. 275–286), Aug 2026.
+- **100% initial conditions:** the thesis p. 288 state reproduces the
+  Table V.1 steady-state signals at t = 0 (throttle 2415 psia, main steam
+  flow 1109.2 lb/s, both steam temperatures 1000 °F, fuel 80.1 lb/s).
+- **The seven emergency tests** reproduce thesis Figures V.1–V.11 as
+  documented per-test above: Tests 1, 2, 3, 5, 7 quantitatively; Tests 4
+  and 6 with the documented capability offset ("Known quantitative
+  offsets").
+- **Runtime:** a full 700 s Test 1 runs in ≈18 s
+  (`Simulator.run`, RK4 at 0.1 s, R2026a).

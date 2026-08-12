@@ -3,9 +3,9 @@ classdef Simulator < handle
 %   Combines a model.PowerPlant, a model.ControlSystem and a
 %   model.LoadProfile into the full state derivative f(t,x) and advances it
 %   with the classic 4th-order Runge-Kutta scheme at Ts = 0.1 s - the same
-%   integration the thesis used (DYSYS, p. 49). RK4 is stable for the
-%   undamped turbine-generator swing pair; explicit Euler is not (see
-%   docs/model_old.md for that history).
+%   integration the thesis used (DYSYS, p. 49). RK4's stability region
+%   covers the undamped turbine-generator swing pair (thesis pp. 152-153),
+%   which explicit Euler cannot integrate.
 %
 %   Example:
 %     par = model.Parameters();
@@ -64,7 +64,7 @@ classdef Simulator < handle
 
         function res = run(obj, x0, tEnd)
             %RUN Integrate from x0 over [0, tEnd]; returns trajectories and
-            %   the standard signal log (same columns as the legacy xx2).
+            %   the standard 25-column signal log (see logNames).
             arguments
                 obj
                 x0   (47,1) double
@@ -108,7 +108,7 @@ classdef Simulator < handle
 
     methods (Static)
         function names = logNames()
-            %LOGNAMES Column names of res.log (matches the legacy xx2).
+            %LOGNAMES Column names of res.log (the thesis's standard plot set).
             names = {'t','ntr','mwo','psso','whp','c3md','cacvd','cfld', ...
                 'card','vdrw','vdew','cfwd','cdwd','hsso','hrho','csyd', ...
                 'cxggd','nfp','cgrd','cfnd','twwm','nfd','nid','nrp','ncp'};

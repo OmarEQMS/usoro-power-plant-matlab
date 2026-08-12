@@ -8,7 +8,7 @@ classdef HeatTransfer
                 wgr, sgr, tgr, uwwgm, ywgr, tpse, upsr)
             % Furnace energy balance: adiabatic flame temperature, then the
             % radiant balance (T^4 terms) solved in closed form for the
-            % effective gas temperature.  (fnxfer.m)
+            % effective gas temperature.  (thesis FNXFER)
             knp33 = 0.333333; kt0 = 537.0; k1sfn = 0.31; k2sfn = 0.145;
             twwm2 = twwm*twwm;
             twwm4 = twwm2*twwm2;
@@ -43,7 +43,7 @@ classdef HeatTransfer
             % conductances (W^0.6 / W^0.8 laws) with temperature-dependent
             % gas specific heat, solved for the gas outlet temperature.
             % Applied along the flue path: primary SH, secondary SH,
-            % reheater, economizer.  (hxfer.m)
+            % reheater, economizer.  (thesis HXFER)
             k0sg = 0.2484; k1sg = 0.1428; ksgt = 10.2272e-6; ksgw = 35.0e-6;
             ws = abs(ws);
             ugm = kugm*wg^0.6;

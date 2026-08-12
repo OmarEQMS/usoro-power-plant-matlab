@@ -3,11 +3,11 @@ classdef SteamTables
 %   Static, stateless transcriptions of the thesis "Steam Table Fits"
 %   (Usoro 1977, Appendix A). Units: p [psia], T [degR], h [Btu/lb],
 %   r (density) [lb/ft^3], s (entropy) [Btu/(lb.degR)].
-%   Each method notes the legacy src/old file it replaces.
+%   Each method notes the thesis FORTRAN subroutine it implements.
 
     methods (Static)
         function [rw, hw, hs, ps, Ts] = drumSaturation(rs)
-            % Saturated drum water/steam properties from steam density.  (drstat.m)
+            % Saturated drum water/steam properties from steam density.  (thesis DRSTAT)
             rs2 = rs*rs;
             rs3 = rs2*rs;
             rw = 49.27105 - 2.13733*rs + 0.03348*rs2;
@@ -18,7 +18,7 @@ classdef SteamTables
         end
 
         function [rw, hw, hs, ps, ts] = deaeratorSaturation(rs)
-            % Saturated deaerator water/steam properties from steam density.  (destat.m)
+            % Saturated deaerator water/steam properties from steam density.  (thesis DESTAT)
             rs2 = rs*rs;
             rs3 = rs2*rs;
             rw = 60.45805 - 19.61207*rs;
@@ -29,7 +29,7 @@ classdef SteamTables
         end
 
         function [p, T, s] = superheatedSteam(r, h)
-            % Superheater steam p,T,s from density and enthalpy.  (shstat.m)
+            % Superheater steam p,T,s from density and enthalpy.  (thesis SHSTAT)
             rh = r*h;
             p = -291.36 - 964.04*r + 0.21781*h + 1.1815*rh;
             T = -1745.1 + 129.1*r + 1.8107*h - 0.066313*rh + 459.67;
@@ -37,7 +37,7 @@ classdef SteamTables
         end
 
         function [p, T, s] = reheatSteam(r, h)
-            % Reheater steam p,T,s from density and enthalpy.  (rhstat.m)
+            % Reheater steam p,T,s from density and enthalpy.  (thesis RHSTAT)
             rh = r*h;
             p = 27.061 - 1019.1*r - 1.7354e-2*h + 1.2279*rh;
             T = -2013.4 + 189.65*r + 1.9629*h - 9.3054e-2*rh + 459.67;
@@ -45,7 +45,7 @@ classdef SteamTables
         end
 
         function [r, T] = feedwater(h, p)
-            % Compressed-liquid feedwater density and temperature.  (fwstat.m)
+            % Compressed-liquid feedwater density and temperature.  (thesis FWSTAT)
             p2 = p*p;
             h2 = h*h;
             hp = h*p;
@@ -57,7 +57,7 @@ classdef SteamTables
         end
 
         function [r, T] = condensateWater(h, p)
-            % Condensate water density and temperature.  (cwstat.m)
+            % Condensate water density and temperature.  (thesis CWSTAT)
             p2 = p*p;
             h2 = h*h;
             hp = h*p;
@@ -68,7 +68,7 @@ classdef SteamTables
         end
 
         function [h, T] = condensatePumpOutlet(r, p)
-            % Condensate pump outlet water enthalpy and temperature.  (cpstat.m)
+            % Condensate pump outlet water enthalpy and temperature.  (thesis CPSTAT)
             p2 = p*p;
             r2 = r*r;
             pr = p*r;
@@ -78,7 +78,7 @@ classdef SteamTables
         end
 
         function [h, T] = feedpumpOutlet(r, p)
-            % Feed pump discharge water enthalpy and temperature.  (fpstat.m)
+            % Feed pump discharge water enthalpy and temperature.  (thesis FPSTAT)
             r2 = r*r;
             p2 = p*p;
             pr = p*r;
@@ -88,17 +88,19 @@ classdef SteamTables
         end
 
         function [ho, T] = hpTurbineExhaust(s, p, ef, h1)
-            % HP turbine exhaust state via isentropic efficiency.  (hpstat.m)
+            % HP turbine exhaust state via isentropic efficiency.  (thesis HPSTAT)
             hi = -485.23 + 1065.28*s + 0.232*p;
             ho = h1 - ef*(h1 - hi);
             T = -1639.24 + 0.119*p + 1.682*ho;
         end
 
         function [ho, p, T] = crossoverSteam(s, r, ef, h1)
-            % IP turbine exhaust / cross-over pipe state.  (crstat.m)
-            % Expansion anchored at inlet enthalpy h1 (thesis p. 149); the
-            % legacy file originally had the isentropic enthalpy here - see
-            % docs/model_old.md, "The crstat.m isentropic-efficiency fix".
+            % IP turbine exhaust / cross-over pipe state.  (thesis CRSTAT)
+            % Expansion anchored at inlet enthalpy h1, same form as the HP
+            % exhaust above (thesis p. 149) - NOT at the isentropic
+            % enthalpy hi; the thesis FORTRAN line is OCR-ambiguous
+            % (H1 vs HI) and the hi-anchored reading gives a sub-saturation
+            % cross-over state and halves the feed pump turbine torque.
             hi = -1211.8 + 683.58*r + 1384.39*s;
             ho = h1 - ef*(h1 - hi);
             p = -381.05 + 0.2783*ho + 668.609*r;
@@ -106,7 +108,7 @@ classdef SteamTables
         end
 
         function [hlpo, rlpo, slpo, T, rw, hw] = condenser(p, qy)
-            % Condenser water/steam and LP exhaust state at quality qy.  (cnstat.m)
+            % Condenser water/steam and LP exhaust state at quality qy.  (thesis CNSTAT)
             p2 = p*p;
             p3 = p2*p;
             p4 = p3*p;
@@ -127,7 +129,7 @@ classdef SteamTables
         end
 
         function [h, r, T] = heaterSteamSat(p)
-            % Extraction-heater saturated steam properties.  (lsstat.m)
+            % Extraction-heater saturated steam properties.  (thesis LSSTAT)
             p2 = p*p;
             p3 = p2*p;
             h = 126.8737 + 4.15377*p - 0.04224*p2 + 1.8e-4*p3;
@@ -136,7 +138,7 @@ classdef SteamTables
         end
 
         function [h, r, T] = heaterWaterSat(p)
-            % Extraction-heater saturated water properties.  (lwstat.m)
+            % Extraction-heater saturated water properties.  (thesis LWSTAT)
             p2 = p*p;
             p3 = p2*p;
             h = 32.5 + 43.49757*p - 7.38007*p2 + 0.51472*p3;
@@ -145,7 +147,7 @@ classdef SteamTables
         end
 
         function [h, T, s] = recircWater(r, p)
-            % Recirculating (downcomer) water properties.  (rwstat.m)
+            % Recirculating (downcomer) water properties.  (thesis RWSTAT)
             rp = r*p;
             r2 = r*r;
             p2 = p*p;
@@ -158,7 +160,7 @@ classdef SteamTables
         end
 
         function [r, T, s] = superheatSprayMix(h, p)
-            % Superheat spray section outlet steam properties.  (systat.m)
+            % Superheat spray section outlet steam properties.  (thesis SYSTAT)
             ph = p*h;
             r = -1.9033 + 1.3862e-3*h + 6.7569e-3*p - 3.7659e-6*ph;
             T = -1654.5 + 1.7443*h + 0.34809*p - 2.0743e-4*ph + 459.67;
@@ -166,7 +168,7 @@ classdef SteamTables
         end
 
         function [r, T, s] = reheatSprayMix(h, p)
-            % Reheat spray section outlet steam properties.  (rystat.m)
+            % Reheat spray section outlet steam properties.  (thesis RYSTAT)
             p2 = p*p;
             h2 = h*h;
             p2h2 = p2*h2;

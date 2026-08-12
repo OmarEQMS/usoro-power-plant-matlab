@@ -8,7 +8,7 @@ classdef VesselDynamics
             % Water-volume and steam-density derivatives of a saturated
             % vessel from its combined mass (zm) and energy (ze) imbalances.
             % The k-coefficients are the saturation-fit slopes; used for
-            % both the drum and the deaerator.  (drum.m)
+            % both the drum and the deaerator.  (thesis DRUM)
             vs = kv - vw;
             z200 = 2*rs;
             z201 = k2 + k3*z200;
@@ -25,7 +25,7 @@ classdef VesselDynamics
 
         function [wderp, wdewh, wdebd, hderp, hdewh] = deaeratorSteam(wdrs, whp)
             % Deaerator heating-steam sources: recirculation pump seal,
-            % waterwall header vents and blowdown.  (destmr.m)
+            % waterwall header vents and blowdown.  (thesis DESTMR)
             whp2 = whp*whp;
             wdrs2 = wdrs*wdrs;
             wdrs3 = wdrs2*wdrs;

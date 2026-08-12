@@ -1,26 +1,14 @@
 # Next steps
 
 Open investigations and improvements, in rough priority order. Context for
-all of them: `model.md` (current model, validation results, known offsets),
-`model_old.md` (legacy code and the crstat/kjtre findings),
-`thesis_notes.md` (thesis summary and FORTRAN-listing landmarks).
-
-**Status of the former must-haves** (all completed Aug 11, 2026):
-
-- constants verification and reheat set-point check — done, results folded
-  into investigation 1 below and `model.md` "Known quantitative offsets";
-- permanent regression harness — `src/tools/validate_against_legacy.m`
-  (127 sample points + dual-RK4 run, all exact; also guards both halves of
-  the kjtre correction contract). Run it after any edit to `+model` or
-  `src/old`;
-- `kjtre` comment in `src/old/const1.m` — in place.
+all of them: `model.md` (model architecture, validation results, known
+offsets) and `thesis_notes.md` (thesis summary and FORTRAN-listing
+landmarks).
 
 ## 1. The uniform fuel/air offset (main investigation)
 
-**Symptom (restated after the Aug 2026 verification session).** The model
-needs ≈10% more fuel and air than the thesis's published steady states to
-hold the same steam conditions, at every load — not, as first thought,
-only at partial load:
+**Symptom.** The model needs ≈10% more fuel and air than the thesis's
+published steady states to hold the same steam conditions, at every load:
 
 | Signal | This model | Thesis (Tables V.1–V.3) |
 |---|---|---|
@@ -36,23 +24,14 @@ at t = 0; they are not an equilibrium of this model (residuals ~0.5 vs
 offset: Test 4 tops out at ≈485 MW, Test 6 settles at ≈470 MW/1857 psia,
 and the self-trimmed 100% point saturates the same way.
 
-**Established (Aug 11, 2026), i.e. what the offset is *not*:**
-
-- *Not a control-constant transcription bug.* Every constant in the tilt,
-  gas-recirc, reheat, superheat, boiler-master and transducer-range groups
-  matches the thesis data deck exactly, read from the scanned pages
-  (printed pp. 278–286), including the OCR-garbled gas-recirc block
-  (`KC1GR=0.004, KTC1GR=20, KC2GR=12, KC3GR=1`) and `K2NG=72.201`.
-- *Not the reheat loop misbehaving.* `trho` sits exactly on its (clamped)
-  schedule at all three trims; the tilt is neutral (|xgg| < 3°, inside the
-  ±5° deadband) and the recirc integrator is frozen at every trim.
-- *Not the gas-recirculation level.* The recirc steady value is
-  path-dependent within a narrow attractor band (≈355–385 lb/s at 77.5%;
-  re-seeded at the thesis's 337 or at the 100% value, the plant pumps it
-  back into the band). Fuel changes < 0.1% across the band — the recirc
-  offset is a *consequence* of the same heat balance, not a cause.
-- Appendix C schedules the reheat set point on `WSSO` where the program
-  listing uses `WHP` (we follow the listing); identical at steady state.
+Already ruled out (Aug 2026 verification, details in `model.md` "Known
+quantitative offsets"): control-constant transcription bugs (all deck
+values verified against the scan), reheat-loop misbehavior (`trho` exactly
+on schedule, tilt inside its deadband at every trim), and the
+gas-recirculation level (fuel changes < 0.1% across its attractor band —
+the recirc offset is a consequence, not a cause). Also neutral: Appendix C
+schedules the reheat set point on `WSSO` where the program listing uses
+`WHP` (we follow the listing); identical at steady state.
 
 **Where the ~110k Btu/s at 77.5% actually goes (open):** our absorbed
 fraction is 80.0% of fuel heat at 77.5% (thesis-implied ≈88%), and the
@@ -62,14 +41,16 @@ concrete checks, in order of promise:
 
 1. **Air/gas network verification (prime suspect).** At the exact thesis
    100% IC state, `Hydraulics.airGas` delivers war = 1181.7 lb/s where
-   thesis Table V.1 reports 1230.3 (−4% at identical inputs). Verify the
-   `arflow` transcription line-by-line against the printed FORTRAN (OCR
-   has no ARFLOW header — find it in the listing; HXFER is at OCR line
-   ≈11078, AVERAG ≈11145) the way `crstat` was caught.
+   thesis Table V.1 reports 1230.3 (−4% at identical inputs). Verify
+   `Hydraulics.airGas` line-by-line against the printed thesis ARFLOW
+   (OCR has no ARFLOW header — find it in the listing; HXFER is at OCR
+   line ≈11078, AVERAG ≈11145), the way the CRSTAT anchoring slip was
+   caught (see `SteamTables.crossoverSteam`).
 2. **Furnace/convective chain verification.** Same treatment for
    `HeatTransfer.furnace`/`convective` vs the printed listing (furnace
-   section in the main program ≈ OCR 9400–9600) — a crstat-class slip in
-   one absorption equation would explain the uniform deficit directly.
+   section in the main program ≈ OCR 9400–9600) — a CRSTAT-class
+   transcription slip in one absorption equation would explain the
+   uniform deficit directly.
 3. **Energy-balance audit completion.** Account for the full gas-side
    ledger at 77.5% (absorptions + stack loss + the fixed-temperature air
    heater `ktat/ktahad/ktapad` treatment) and identify the sink that eats
@@ -80,10 +61,10 @@ concrete checks, in order of promise:
    heater chain (`hpext`/`ipext`/`lpext` fits, `qhh` with the raised
    `hcro`). Also the likely driver of the slow `heco`/`hhho` trim drift
    (section 3).
-5. **Fit-range check (deprioritized).** `crstat`'s corrected cross-over
-   enthalpy (≈1380 Btu/lb at ≈173 psia/709 °F) is consistent with real
-   steam tables, so the fix itself is sound at the new regime; a broader
-   sweep of the 16 fits vs steam tables remains useful hygiene.
+5. **Fit-range check (deprioritized).** The CRSTAT cross-over enthalpy as
+   implemented (≈1380 Btu/lb at ≈173 psia/709 °F) is consistent with real
+   steam tables, so the anchoring choice is sound at this regime; a
+   broader sweep of the 16 fits vs steam tables remains useful hygiene.
 
 If 1–3 come back clean, the remaining explanation is that the thesis's
 published tables/figures were produced with a different code or data-deck
@@ -102,11 +83,10 @@ mentions but never plots.
 
 ## 3. Smaller items
 
-- **Rate feedforwards ("falta"):** `fc2dv`, `fcp1st`, `fctrho`, `fcxgg`
-  are stubbed to zero (as in the legacy code). Implement them as proper
-  filtered derivatives of `c2dv`, `cp1st`, `ctrho`, `cxgg` (the thesis
-  block diagrams' d/dt compensation) and see whether the deaerator /
-  temperature loops tighten.
+- **Rate feedforwards:** `fc2dv`, `fcp1st`, `fctrho`, `fcxgg` are stubbed
+  to zero. Implement them as proper filtered derivatives of `c2dv`,
+  `cp1st`, `ctrho`, `cxgg` (the thesis block diagrams' d/dt compensation)
+  and see whether the deaerator / temperature loops tighten.
 - **Boiler-master anti-windup:** the integrator state `c3md` grows without
   bound whenever the pressure set point is unreachable (Tests 6, 7). Its
   limited copy is what acts, so behavior is correct, but a conditional

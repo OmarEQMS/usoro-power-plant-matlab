@@ -1,14 +1,17 @@
 function gen_parameters
 %GEN_PARAMETERS Regenerate src/+model/Parameters.m from the legacy scripts.
-%   Runs the legacy constant scripts (src/old: diginit100, const1..const3)
-%   and emits every plant/control constant as a literal property default of
-%   model.Parameters. Simulation setup, state values, scenario inputs and
-%   logging variables are excluded. Re-run this tool whenever the legacy
-%   constant scripts change.
+%   Runs the archived legacy constant scripts (deprecated/old: diginit100,
+%   const1..const3) and emits every plant/control constant as a literal
+%   property default of model.Parameters. Simulation setup, state values,
+%   scenario inputs and logging variables are excluded. Re-run this tool
+%   whenever the legacy constant scripts change (they are frozen, so
+%   normally never). The emitted file carries no reference back here;
+%   provenance is documented in deprecated/README.md.
 
-thisdir = fileparts(mfilename('fullpath'));   % .../src/tools
-srcdir  = fileparts(thisdir);                 % .../src
-addpath(fullfile(srcdir, 'old'));
+thisdir = fileparts(mfilename('fullpath'));   % .../deprecated/tools
+depdir  = fileparts(thisdir);                 % .../deprecated
+srcdir  = fullfile(fileparts(depdir), 'src'); % .../src
+addpath(fullfile(depdir, 'old'));
 
 diginit100
 const1
@@ -18,7 +21,7 @@ const3
 names = who;
 % not constants: sim setup, initial-state data, state names, scenario and
 % derivative-precomputation variables from the legacy scripts
-skip = {'thisdir','srcdir','names','ans', ...
+skip = {'thisdir','depdir','srcdir','names','ans', ...
     'x0','xx','xx2','x00','tprint','Ts','samples','mat_model','t', ...
     'nfp','hhho','heco','vdrw','rdrs','nrp','twwm','rpso','hpso','rsso', ...
     'hsso','rsco','rrho','hrho','rcro','ntr','ncp','hlho','vdew','rdes', ...
@@ -37,9 +40,10 @@ cleaner = onCleanup(@() fclose(fid));
 
 fprintf(fid, 'classdef Parameters\n');
 fprintf(fid, '%%PARAMETERS Plant and control-system constants of the Usoro Digital Model.\n');
-fprintf(fid, '%%   GENERATED FILE - do not edit by hand. Regenerate with src/tools/gen_parameters.m,\n');
-fprintf(fid, '%%   which extracts the values from the legacy scripts in src/old\n');
-fprintf(fid, '%%   (diginit100.m, const1.m, const2.m, const3.m).\n');
+fprintf(fid, '%%   GENERATED FILE - do not edit by hand. The values are the thesis data\n');
+fprintf(fid, '%%   deck (Usoro 1977, FORTRAN listing, printed pp. 275-286), verified\n');
+fprintf(fid, '%%   against the DSpace scan in Aug 2026. The single deliberate deviation\n');
+fprintf(fid, '%%   is the kjtre units correction (see docs/model.md).\n');
 fprintf(fid, '%%\n');
 fprintf(fid, '%%   Names follow the thesis symbols (Usoro 1977, Appendix A/C):\n');
 fprintf(fid, '%%   k*   gains, fits and physical constants     kv*  fill volumes\n');
@@ -59,7 +63,7 @@ for i = 1:numel(names)
         % ride-through, which is impossible with the as-listed value (the
         % swing pair loses synchronism). Tests 1 and 5 are insensitive to
         % kjtre. See docs/model.md, "The kjtre units correction".
-        fprintf(fid, '        %s = %.17g/32.174; %% corrected, see header of this property\n', ...
+        fprintf(fid, '        %s = %.17g/32.174; %% units correction, see docs/model.md\n', ...
             names{i}, v);
     else
         fprintf(fid, '        %s = %.17g;\n', names{i}, v);

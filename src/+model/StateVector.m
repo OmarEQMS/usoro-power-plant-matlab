@@ -1,8 +1,8 @@
 classdef StateVector
 %STATEVECTOR Index map and pack/unpack helpers for the 47-state vector.
-%   State ordering is identical to the legacy code and the thesis data deck
-%   (Usoro 1977, p. 288): states 1-22 and 47 are physical, 23-46 belong to
-%   the control system. See docs/model_old.md for the per-state units.
+%   State ordering follows the thesis data deck (Usoro 1977, p. 288):
+%   states 1-22 and 47 are physical, 23-46 belong to the control system.
+%   See docs/model.md, "State vector", for the full table with units.
 
     properties (Constant)
         NFP   = 1;   % feed pump turbine speed              [rad/s]

@@ -3,12 +3,12 @@ classdef Hydraulics
 %   Static transcriptions of the thesis flow subroutines (Usoro 1977,
 %   Appendix A): each combines pump/fan performance quadratics with pipe
 %   friction and solves the resulting quadratic for the flow. Local fit
-%   coefficients are kept inside each method exactly as in the legacy
-%   files (they are subroutine-local in the thesis FORTRAN as well).
+%   coefficients are kept inside each method, subroutine-local exactly as
+%   in the thesis FORTRAN.
 
     methods (Static)
         function w = orificeFlow(r, pd, kf)
-            % Steam flow from a momentum balance, sign-preserving.  (shflow.m)
+            % Steam flow from a momentum balance, sign-preserving.  (thesis SHFLOW)
             kd1 = 1;
             if pd < 0
                 pd = -pd;
@@ -21,13 +21,13 @@ classdef Hydraulics
                 feedwater(wry, wsy, rdew, pdes, pdrs, reco, afv, nfp)
             % Booster + main feed pump network: pump curves in series with
             % the feedwater valve, HP heater and economizer friction,
-            % solved for feed pump flow.  (fwflow.m; thesis pp. 159-161)
+            % solved for feed pump flow.  (thesis FWFLOW, pp. 159-161)
             k1fp = -57.3012e-3; k2fp = 959.4371e-6; k3fp = 203.8473e-6;
             k4fp = -1.735761e-3; k5fp = 129.1779e-6; k6fp = 548.9264e-9;
             k1bp = -2.63447e-3; k2bp = 200.721e-6; k3bp = 99.9049e-6;
             kfhh = 4.7469e-3; kfec = 3.878121e-3; kfv = 1.1721e-3;
             kwfpx = 19.6677; knbpr = 0.333333;
-            knbpr2 = knbpr*knbpr; %#ok<NASGU> % kept from legacy file
+            knbpr2 = knbpr*knbpr; %#ok<NASGU> % unused, kept as in the thesis listing
             nbp = knbpr*nfp;
             nbp2 = nbp*nbp;
             nfp2 = nfp*nfp;
@@ -64,7 +64,7 @@ classdef Hydraulics
         function [wcw, wcp, pcpo, plho, wlhx, wdvo, ecp] = ...
                 condensate(pcn, rcno, rdvo, pdes, ncp, adv, kncp)
             % Condensate pump network: pump curve, LP heater friction and
-            % deaerator valve, solved for condensate pump flow.  (cwflow.m)
+            % deaerator valve, solved for condensate pump flow.  (thesis CWFLOW)
             kflh = 3.914168e-3; kdv = 9.434e-3; k1cp = -1.64515e-2;
             k2cp = 1.20115e-4; k3cp = 1.57933e-4; k4cp = -8.88465e-3;
             k5cp = 9.2870e-4; k6cp = 4.34174e-7; k1lhx = 25.60544;
@@ -93,7 +93,7 @@ classdef Hydraulics
         function [wrw, wrp, wwwo, pdco, prpo, erp] = ...
                 recirculation(knrp, rdc, rdrw, nrp, pdrs)
             % Recirculation pump network: downcomer/waterwall friction and
-            % static head, solved for pump flow.  (rwflow.m)
+            % static head, solved for pump flow.  (thesis RWFLOW)
             kn144 = 144.0; kldc = 137.0; kwrps = 4.3014; k1rp = -1.73366e-3;
             k2rp = 1.64728e-4; k3rp = 5.5798e-5; k4rp = -1.3391e-3;
             k5rp = 3.45853e-4; k6rp = 2.8937e-6; kfdc = 381.048e-6;
@@ -122,7 +122,7 @@ classdef Hydraulics
         function [war, wwwg, wfd, wgo, wid, pahao, pfdo, pfn, pecgo, papgo, ...
                 pido, efd, eid] = airGas(knfd, knid, nfd, nid, wgr, wfl, avf, avi)
             % Air-gas path: FD and ID fan curves, air heater, furnace and
-            % gas-side friction, solved for FD fan flow.  (arflow.m)
+            % gas-side friction, solved for FD fan flow.  (thesis ARFLOW)
             kpat = 14.7;
             k1fd = -7.41568e-7; k2fd = 8.67456e-6; k3fd = 1.67206e-4;
             k4fd = -2.18247e-6; k5fd = 5.13044e-5; k6fd = -6.96849e-5;

@@ -4,7 +4,7 @@ classdef Turbomachinery
 
     methods (Static)
         function [waux, wh] = hpExtraction(w)
-            % HP turbine auxiliary and heater extraction flows.  (hpext.m)
+            % HP turbine auxiliary and heater extraction flows.  (thesis HPEXT)
             w2 = w*w;
             w3 = w2*w;
             waux = 17.15813 + 1.08e-2*w;
@@ -12,7 +12,7 @@ classdef Turbomachinery
         end
 
         function [w2x, w3x, h2x, p2x, p3x] = ipExtraction(w, p1, po, h1, ho)
-            % IP turbine interstage/discharge extractions.  (ipext.m)
+            % IP turbine interstage/discharge extractions.  (thesis IPEXT)
             po2 = po*po;
             po3 = po2*po;
             ht = h1 + ho;
@@ -28,7 +28,7 @@ classdef Turbomachinery
 
         function [w1lhs, w2lhs, wdex, wlhst, p1lhs, p2lhs, p3lhs, ...
                 h1lhs1, h2lhs1, hdex] = lpExtraction(wlp, pcro, pcn, hcro, hlpo)
-            % LP turbine extractions for the LP feedwater heaters.  (lpext.m)
+            % LP turbine extractions for the LP feedwater heaters.  (thesis LPEXT)
             wlp2 = wlp*wlp;
             wlp3 = wlp2*wlp;
             plpt = pcro + pcn;
@@ -47,7 +47,7 @@ classdef Turbomachinery
         end
 
         function [tq1, mw1] = inductionMotor(nelec, velec, knm, n, km, smax)
-            % Induction motor torque from the slip characteristic.  (torque.m)
+            % Induction motor torque from the slip characteristic.  (thesis TORQUE)
             nmax = nelec/knm;
             s = (nmax - n)/nmax;
             velec2 = velec*velec;
@@ -56,7 +56,7 @@ classdef Turbomachinery
         end
 
         function [tqfp1, mwfp1] = feedpumpTurbine(wft, hft1, nfp)
-            % Feed pump drive turbine torque from extraction steam.  (fpturb.m)
+            % Feed pump drive turbine torque from extraction steam.  (thesis FPTURB)
             kj = 778.17;
             hfto = 1059.0;
             eft = 1.0;

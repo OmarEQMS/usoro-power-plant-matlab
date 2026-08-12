@@ -16,9 +16,9 @@ classdef ControlSystem < handle
     end
 
     properties
-        % Rate feedforward terms of the deaerator/reheat/superheat loops.
-        % The legacy code stubs these to zero (marked "falta"); they stand
-        % for the d/dt compensation signals of the thesis block diagrams.
+        % Rate feedforward terms of the deaerator/reheat/superheat loops:
+        % the d/dt compensation signals of the thesis block diagrams,
+        % stubbed to zero (not implemented; see docs/next_steps.md).
         fc2dv  (1,1) double = 0
         fcp1st (1,1) double = 0
         fctrho (1,1) double = 0
@@ -266,7 +266,7 @@ classdef ControlSystem < handle
 
     methods (Static)
         function c = xducer(zmin, zmax, cmin, cmax, z)
-            % Linear transducer with saturation.  (xducer.m)
+            % Linear transducer with saturation.  (thesis XDUCER)
             c = cmin + (cmax - cmin)*(z - zmin)/(zmax - zmin);
             if c < cmin
                 c = cmin;
@@ -277,7 +277,7 @@ classdef ControlSystem < handle
         end
 
         function zc = limchk(zc)
-            % Clamp a controller signal to the 1-5 V range.  (limchk.m)
+            % Clamp a controller signal to the 1-5 V range.  (thesis LIMCHK)
             if zc < 1
                 zc = 1;
             end
@@ -287,7 +287,7 @@ classdef ControlSystem < handle
         end
 
         function zc = check(zc, zmax, zmin)
-            % Clamp to [zmin, zmax] (legacy argument order).  (check.m)
+            % Clamp to [zmin, zmax] (thesis CHECK argument order).
             if zc < zmin
                 zc = zmin;
             end

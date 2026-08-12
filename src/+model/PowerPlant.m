@@ -5,7 +5,7 @@ classdef PowerPlant < handle
 %   the actuator commands. The control-system states are advanced by
 %   model.ControlSystem; model.Simulator combines both.
 %
-%   The evaluation order follows the thesis/legacy computation sequence
+%   The evaluation order follows the thesis computation sequence
 %   (see docs/model.md). All intermediate variables are accumulated in
 %   a signal struct `sig` under their thesis names, which also serves the
 %   control system and the logger.
@@ -329,7 +329,7 @@ classdef PowerPlant < handle
 
     methods (Static, Access = private)
         function [a, b, c] = avg3(a1, a2, b1, b2, c1, c2)
-            % Arithmetic means of three inlet/outlet pairs.  (averag.m)
+            % Arithmetic means of three inlet/outlet pairs.  (thesis AVERAG)
             a = 0.5*(a1 + a2);
             b = 0.5*(b1 + b2);
             c = 0.5*(c1 + c2);

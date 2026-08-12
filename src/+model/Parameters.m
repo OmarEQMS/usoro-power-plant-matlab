@@ -1,8 +1,9 @@
 classdef Parameters
 %PARAMETERS Plant and control-system constants of the Usoro Digital Model.
-%   GENERATED FILE - do not edit by hand. Regenerate with src/tools/gen_parameters.m,
-%   which extracts the values from the legacy scripts in src/old
-%   (diginit100.m, const1.m, const2.m, const3.m).
+%   GENERATED FILE - do not edit by hand. The values are the thesis data
+%   deck (Usoro 1977, FORTRAN listing, printed pp. 275-286), verified
+%   against the DSpace scan in Aug 2026. The single deliberate deviation
+%   is the kjtre units correction (see docs/model.md).
 %
 %   Names follow the thesis symbols (Usoro 1977, Appendix A/C):
 %   k*   gains, fits and physical constants     kv*  fill volumes
@@ -141,7 +142,7 @@ classdef Parameters
         kjfpe = 2161.6999999999998;
         kjid = 188000;
         kjrp = 576.10000000000002;
-        kjtre = 625000/32.174; % corrected, see header of this property
+        kjtre = 625000/32.174; % units correction, see docs/model.md
         klhm = 1.05;
         klp = 126.41;
         klrl = 0.0083330000000000001;

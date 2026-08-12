@@ -1,11 +1,10 @@
 classdef InitialConditions
 %INITIALCONDITIONS Steady-state operating points of the Digital Model.
 %   at100() is the canonical 100%-load (600 MW) set from the thesis data
-%   deck (Usoro 1977, p. 288). Other operating points should be obtained by
-%   trimming: run the simulator at the target load demand until steady
-%   (the legacy 77.5%/50% sets in src/old were produced with the frozen
-%   speed states and the pre-fix crstat, so they are not equilibria of this
-%   model).
+%   deck (Usoro 1977, p. 288). Other operating points are obtained by
+%   trimming — running the simulator at the target load demand until
+%   steady; src/tools/trim_operating_points.m generates the 77.5% and 50%
+%   points that way (+model/ic775.mat, +model/ic50.mat).
 
     methods (Static)
         function x0 = at100()

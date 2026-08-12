@@ -9,8 +9,6 @@ function trim_operating_points
 %        never settles by itself; damping does not move the equilibrium),
 %     3. pinning the swing pair exactly: ntr = nelec,
 %        delta = asin(mwtro/2Kmwr).
-%   The legacy 77.5%/50% sets in src/old are frozen-era artifacts and are
-%   not equilibria of this model.
 
 thisdir = fileparts(mfilename('fullpath'));   % .../src/tools
 srcdir  = fileparts(thisdir);                 % .../src
