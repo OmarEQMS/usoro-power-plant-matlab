@@ -247,6 +247,25 @@
   img,
   svg {
     max-width: 100%;
+    height: auto;
+  }
+}
+
+// clickable plant schematic (plant/overview)
+.plant-schematic {
+  a {
+    cursor: pointer;
+  }
+
+  a:hover .comp,
+  a:focus .comp {
+    stroke-width: 2.75;
+    filter: brightness(0.94);
+  }
+
+  text {
+    font-family: var(--bs-body-font-family);
+    user-select: none;
   }
 }
 

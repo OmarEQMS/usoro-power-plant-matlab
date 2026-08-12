@@ -272,7 +272,10 @@ renamed model file fails the site build instead of silently lying).
    **Done Aug 12, 2026** — including the view-source modals
    (`sourceFile:` front-matter on the ten file pages).
 6. **Polish & de-planning** — mobile pass, print styles, favicon,
-   landing-page refinements; optional plant schematics (see 4).
+   landing-page refinements. Plant schematic: a clickable inline-SVG
+   overview diagram (every component links to its page) shipped on
+   `plant/overview` Aug 12, 2026; per-component diagrams remain
+   optional.
    De-planning **done Aug 12, 2026**: the `stub` flag, sidebar badges,
    shell stub-note and `gen-stubs.ts` are removed now that all 44 pages
    are authored.
