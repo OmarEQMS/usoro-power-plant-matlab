@@ -70,6 +70,8 @@ Documentation index:
   verification tables, FORTRAN-listing landmarks).
 - `docs/next_steps.md` — open investigations (the uniform fuel/air offset
   chief among them) and planned improvements.
+- `docs/ui.md` — plan for the documentation/learning website (source under
+  `ui/` once built).
 
 ## Verification
 
