@@ -65,9 +65,11 @@ invalidates them.
 `run_ui` opens `PlantApp` — a programmatic `uifigure` (no binary
 `.mlapp`, so it diffs like code): a clickable plant schematic where
 each block opens live charts, a scenario dropdown covering the seven
-tests, play/pause/speed controls, and an inputs window showing what
-the scenario is doing to the plant. Architecture notes for anyone
-extending it:
+tests, play/pause/speed controls, a run-time selector (350/700/1400/
+2800 s; scenarios load their thesis default, and extending it — even
+after a run finishes — grows the buffers in place so Play just
+continues), and an inputs window showing what the scenario is doing
+to the plant. Architecture notes for anyone extending it:
 
 - a MATLAB `timer` drives `Simulator.step` (the
   [public single-step method](@code/simulator)); the speed selector

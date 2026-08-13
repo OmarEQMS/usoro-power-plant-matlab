@@ -15,6 +15,21 @@ infinite bus. All quantities are in English engineering units (lb/s, Btu/lb,
 psia, ft·lbf, rad/s). All 47 states are integrated with classic fixed-step
 RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49).
 
+## Highlights
+
+- **All seven thesis emergency tests** implemented and compared
+  quantitatively against Figures V.1–V.11 (`docs/model.md`, per-test).
+- **Trimmed operating points sit on the thesis's published steady-state
+  tables** (77.5%: fuel 63.6 vs 63.3 lb/s, air 977 vs 972, drum 2602 vs
+  2604 psia).
+- **Transcription verified against the printed FORTRAN scan** — including
+  three corrected slips (CRSTAT anchoring, `kjtre` units, HXFER mean
+  specific heat) and a bit-for-bit equivalence harness against the
+  archived first port (`deprecated/tools/validate_against_legacy.m`).
+- **Interactive dashboard** (`src/run_ui.m`) and a **45-page
+  documentation/learning website** (`ui/`, `npm run build`).
+- **Fast:** a 700 s emergency run takes ≈18 s headless.
+
 ## Entry points
 
 | Script | What it does |
@@ -24,7 +39,7 @@ RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49).
 | `src/+test/run5.m` | Thesis Test 5: 30% line-voltage step drop at 77.5% load (auxiliary motors slow, controls compensate). |
 | `src/+test/run6.m` | Thesis Test 6: grid frequency drop 60 → 56 Hz at 77.5% load (governor droop, air-limited output; uses the documented `kjtre` units correction, see `docs/model.md`). |
 | `src/+test/run7.m` | Thesis Test 7: loss of one of two FD/ID fan pairs at 100% load (air-limited output, no run-back). |
-| `src/run_ui.m` | **Interactive dashboard** (`PlantApp`): clickable plant schematic with per-component live charts, scenario selection (Tests 1–7 / steady hold), play/pause/reset and speed control. |
+| `src/run_ui.m` | **Interactive dashboard** (`PlantApp`): clickable plant schematic with per-component live charts, scenario selection (Tests 1–7 / steady hold), play/pause/reset, speed control, and a run-time selector (350/700/1400/2800 s — extend a finished run in place). |
 
 Tests 2–7 (and the dashboard's non-Test-1 scenarios) need the trimmed
 operating points: run `src/tools/trim_operating_points.m` once first.
@@ -64,14 +79,18 @@ enthalpies, and auxiliary machine speeds.
 Documentation index:
 
 - `docs/model.md` — architecture, state vector, control loops, data flow,
-  per-test validation results, known quantitative offsets, how to extend.
+  per-test validation results, known quantitative offsets, how to extend,
+  and the maintainer workflow (verification oracles, the fix-and-re-trim
+  loop).
 - `docs/thesis_notes.md` — standalone thesis summary (plant description,
   modeling assumptions, control system, the seven emergency tests,
   verification tables, FORTRAN-listing landmarks).
 - `docs/next_steps.md` — open investigations (the Test 4 air-margin limit
   cycle chief among them) and planned improvements.
-- `docs/ui.md` — plan for the documentation/learning website; source lives
-  under `ui/`, built site under `dist/`.
+- `docs/ui.md` — the documentation/learning website: pipeline
+  architecture, how to build and add pages, authoring conventions,
+  verification checklist, and gotchas. Source under `ui/`, built site
+  under `dist/`.
 
 **Website content policy:** the site's pages (`ui/content/`) describe the
 *current* model only — no "previously the model did X" framing. All

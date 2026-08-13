@@ -422,3 +422,48 @@ directly through the pump/fan slow-down time constants.
   residual ("Known quantitative offsets").
 - **Runtime:** a full 700 s Test 1 runs in ≈18 s
   (`Simulator.run`, RK4 at 0.1 s, R2026a).
+
+## Maintainer workflow: how to change the model and stay honest
+
+The methods that found every defect so far, in the order to apply them
+when something looks wrong (or after any `+model` change):
+
+1. **Verify against the scan, never the OCR.** The OCR text is for
+   *locating* things (grep for subroutine names, get an OCR line number,
+   map to a printed page via the landmarks in `thesis_notes.md`); the
+   printed scan is the only citable source. The characters the OCR
+   garbles (`1`/`I`, `+`/`-`, exponent digits) are exactly the ones that
+   matter — both the CRSTAT and HXFER fixes were invisible in the OCR.
+2. **Use the built-in oracles.** Three cheap consistency checks catch
+   most transcription errors: (a) evaluate the derivative at the thesis
+   p. 288 ICs — every |ẋ| far from zero points at a specific subsystem;
+   (b) closure checks inside a subsystem (the feed-pump torque balance
+   closing to 4 digits confirmed CRSTAT); (c) trim and compare against
+   Tables V.1–V.3 — fuel, air, steam flow and drum pressure should land
+   within ~0.5%.
+3. **Fix both sides.** A transcription fix goes into `src/+model` *and*
+   `deprecated/old/` (CRSTAT and HXFER precedent), keeping the
+   equivalence proof meaningful. Behavior the legacy scripts simply
+   lack (rate feedforwards) becomes a documented carve-out in
+   `validate_against_legacy.m` instead.
+4. **Run the harness:** `deprecated/tools/validate_against_legacy.m`
+   after any `+model` or `deprecated/old` edit (~1 min, bit-for-bit).
+5. **Re-trim if the physics changed:**
+   `src/tools/trim_operating_points.m` regenerates `ic775.mat`/`ic50.mat`
+   (Tests 2–7 start from them). Skipping this after a physics fix leaves
+   the tests starting from the *old* model's equilibria.
+6. **Sweep all seven tests** and compare against the per-test numbers in
+   this file — a fix that helps one test can move the others (the HXFER
+   fix moved Test 7 from "matches" to "slightly above the figure").
+7. **Update the record:** current numbers in this file and on the site's
+   component pages; the *story* (symptom → found → root cause → change)
+   as a new entry on `ui/content/plant/changelog.md`; drop the item from
+   `next_steps.md`. Site pages carry current state only (root README,
+   "Website content policy").
+
+Two mechanics worth remembering: stepping semantics live in
+`Simulator.step`, not the RHS (state clamping + rate-feedforward
+commits — an external ODE solver on the bare `derivative` loses both),
+and MATLAB runs headless with
+`matlab -batch "run('script.m')"` — every long verification in this
+project's history ran that way, in the background, in parallel.

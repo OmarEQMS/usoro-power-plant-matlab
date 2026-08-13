@@ -5,7 +5,8 @@ classdef PlantApp < handle
 %   A schematic of the plant with clickable components: clicking a block
 %   opens a window with live charts of that component's key variables.
 %   The toolbar selects the scenario (thesis Tests 1-7 or a steady hold),
-%   plays/pauses/resets the simulation, and sets the simulation speed.
+%   plays/pauses/resets the simulation, and sets the simulation speed and
+%   run time (the run-time selector can extend a finished run in place).
 %   Integration is the same RK4/0.1 s scheme as model.Simulator.run
 %   (driven incrementally through model.Simulator.step).
 
@@ -19,6 +20,7 @@ classdef PlantApp < handle
         StatusLabel
         ScenarioDD
         SpeedDD
+        DurationDD
         Timer
         Running (1,1) logical = false
 
@@ -153,9 +155,9 @@ classdef PlantApp < handle
                 'Padding', [8 8 8 8], 'RowSpacing', 6);
 
             % toolbar
-            tb = uigridlayout(gl, [1 9], 'ColumnWidth', ...
-                {70, 150, 64, 64, 64, 70, 58, 90, '1x'}, 'Padding', [0 0 0 0], ...
-                'ColumnSpacing', 6);
+            tb = uigridlayout(gl, [1 11], 'ColumnWidth', ...
+                {70, 150, 64, 64, 64, 70, 58, 90, 44, 78, '1x'}, ...
+                'Padding', [0 0 0 0], 'ColumnSpacing', 6);
             lbl = uilabel(tb, 'Text', 'Scenario:', 'HorizontalAlignment', 'right'); %#ok<NASGU>
             obj.ScenarioDD = uidropdown(tb, 'Items', {'Test 1: 100%->77.5%', ...
                 'Test 2: 77.5%->50%', 'Test 3: 50%->77.5%', 'Test 4: 77.5%->100%', ...
@@ -171,6 +173,13 @@ classdef PlantApp < handle
             uilabel(tb, 'Text', 'Speed:', 'HorizontalAlignment', 'right');
             obj.SpeedDD = uidropdown(tb, 'Items', {'1x', '5x', '20x', 'Max'}, ...
                 'Value', '20x');
+            uilabel(tb, 'Text', 'Run:', 'HorizontalAlignment', 'right');
+            obj.DurationDD = uidropdown(tb, ...
+                'Items', {'350 s', '700 s', '1400 s', '2800 s'}, ...
+                'Value', '700 s', ...
+                'Tooltip', ['Simulation end time. Extend it any time - even ' ...
+                'after a run finishes - and press Play to continue.'], ...
+                'ValueChangedFcn', @(dd, ~) obj.onDurationChanged(dd.Value));
             obj.StatusLabel = uilabel(tb, 'Text', 'ready', 'FontWeight', 'bold');
 
             % diagram
@@ -300,6 +309,7 @@ classdef PlantApp < handle
             obj.SwitchTimes = sw;
             obj.X0 = x0;
             obj.TEnd = tEnd;
+            obj.DurationDD.Value = sprintf('%d s', tEnd);  % scenario default
             obj.initBuffers();
             obj.onReset();
         end
@@ -417,6 +427,27 @@ classdef PlantApp < handle
                 obj.onPause();
                 obj.StatusLabel.Text = ['error: ' err.message];
             end
+        end
+
+        function onDurationChanged(obj, val)
+            %ONDURATIONCHANGED Set the simulation end time from the dropdown.
+            %   Extending grows the signal buffers in place, so a running
+            %   (or finished) simulation continues from where it is -
+            %   nothing is reset. Shrinking below the current time just
+            %   ends the run there; collected samples are kept.
+            obj.TEnd = sscanf(val, '%f');
+            n = round(obj.TEnd/obj.Sims{1}.Ts) + 1;
+            if size(obj.Buf, 1) < n
+                obj.TBuf(end+1:n, 1) = 0;
+                obj.Buf(end+1:n, :) = 0;
+            end
+            for k = keys(obj.Charts)
+                c = obj.Charts(k{1});
+                if isvalid(c.fig)
+                    set(findall(c.fig, 'Type', 'axes'), 'XLim', [0, obj.TEnd]);
+                end
+            end
+            obj.refreshUi();
         end
 
         function onChartClosed(obj, id, fig)
