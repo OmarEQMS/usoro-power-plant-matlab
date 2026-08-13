@@ -57,7 +57,7 @@ classdef HeatTransfer
             z6 = z3 + z4;
             z7 = z3*tg1 - ugs*tse - z5*tg1*tg1 - z4*tg1;
             tgo = 0.5*(sqrt(z6*z6 - 4*z5*z7) - z6)/z5;
-            sg = z1 + z2*(tg1 - tgo);
+            sg = z1 + z2*(tg1 + tgo);
             qc = wg*sg*(tg1 - tgo);
             q = qc + qr;
             tme = tse + qc/ums;

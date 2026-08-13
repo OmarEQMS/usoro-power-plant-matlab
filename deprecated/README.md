@@ -15,6 +15,12 @@ model's correctness claims.
   component functions. **Do not edit** — `validate_against_legacy.m`
   and the kjtre contract depend on these staying as-is (in particular,
   `const1.m` must keep `kjtre=625000` as listed in the thesis deck).
+  Two sanctioned exceptions, both transcription-slip corrections applied
+  identically on both sides so the equivalence stays meaningful:
+  `crstat.m` (isentropic anchoring, `ho=h1-...`, Aug 2026) and
+  `hxfer.m` (`sg=z1+z2*(tg1+tgo)`, the printed listing's `+`, Aug 2026 —
+  the `-` slip under-counted convective heat delivery ~10% at every
+  load; see docs/model.md).
 - **`model_old.md`** — the legacy code's documentation: state-vector
   table, module ↔ thesis correspondence, the frozen-speed history
   (why `pba1` hardcoded `nfp`/`ntr` to zero and how RK4 fixed it), and
@@ -47,7 +53,13 @@ restored to the legacy value, all 47 derivative components and the final
 RK4 state must match **exactly** (zero difference); with the shipped
 `Parameters`, the only allowed difference is `xdot(16)`, scaled by exactly
 32.174. It also guards both halves of the kjtre correction contract
-(`old/const1.m` keeps 625000; `Parameters` ships 625000/32.174).
+(`old/const1.m` keeps 625000; `Parameters` ships 625000/32.174). Second
+carve-out: the thesis rate feedforwards (`FC2DV`/`FCP1ST`/`FCTRHO`/
+`FCXGG`) are implemented in `model.ControlSystem` but stubbed to zero in
+`digpte47`, so the harness disables `rateFeedforwardsEnabled` on its
+comparison controllers. (The `Simulator`'s per-step limiter write-back,
+`ControlSystem.clampStates`, is a stepping-level behavior and inactive at
+the interior points the harness compares.)
 
 Last full pass: Aug 11, 2026 (all checks passed). Historical baseline
 (original A/B session): derivative exact at 5 hand-picked branch points,

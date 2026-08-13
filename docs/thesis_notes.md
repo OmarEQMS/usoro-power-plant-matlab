@@ -218,6 +218,17 @@ Porting gotchas learned the hard way:
   variable numerically (the `CRSTAT` case: the correct reading was verified
   because the feed-pump torque balance then closes to 4 digits at the p. 288
   initial conditions).
+- Sign characters can silently flip in transcription: HXFER's
+  `SG=Z1+Z2*(TG1+TGO)` (card PAT11075, printed p. 274) was ported as
+  `(tg1-tgo)` and cost ≈10% of fuel/air at every load for two years —
+  found Aug 2026 by reading the scan, not the OCR. Cross-check any `±`
+  inside a parenthesized sum against the physics (here: mean specific
+  heat over the exchanger, consistent with the subroutine's own outlet-
+  temperature quadratic).
+- The listing's LIMCHK/CHECK calls on state variables act by reference —
+  they saturate the stored integrator states themselves (anti-windup),
+  not just the values used downstream. A pure-f(t,x) port must reproduce
+  this at the stepping level (see `ControlSystem.clampStates`).
 - The published initial conditions are excellent consistency oracles: evaluate
   every derivative at them; any |ẋ| far from zero indicates a transcription
   error, not plant physics.

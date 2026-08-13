@@ -26,6 +26,11 @@ function validate_against_legacy(opts)
 %   model.Parameters must ship 625000/32.174 — a "fix" on either side
 %   would silently double- or un-apply the correction.
 %
+%   Second carve-out: the thesis rate feedforwards (FC2DV/FCP1ST/FCTRHO/
+%   FCXGG) are implemented in model.ControlSystem but stubbed to zero in
+%   legacy digpte47, so both comparison controllers run with
+%   rateFeedforwardsEnabled = false.
+%
 %   Runtime ~30-60 s, dominated by the legacy digpte47 evaluations (each
 %   one re-runs the constant scripts). Options:
 %     rk4Seconds   dual-RK4 stepping window, 0 skips it   (default 50)
@@ -61,10 +66,17 @@ fprintf('kjtre contract: legacy 625000, Parameters 625000/32.174 ... OK\n');
 % so the simulators must use the same profiles.
 parTwin = par;
 parTwin.kjtre = 625000;
-simTwin = model.Simulator(model.PowerPlant(parTwin), ...
-    model.ControlSystem(parTwin), model.LoadProfile.test1());
-simCorr = model.Simulator(model.PowerPlant(par), ...
-    model.ControlSystem(par), model.LoadProfile.test1());
+% Carve-out #2 (alongside kjtre): the rate feedforwards FC2DV/FCP1ST/
+% FCTRHO/FCXGG are implemented in model.ControlSystem but stubbed to zero
+% in legacy digpte47, so the equivalence comparison disables them.
+ctrlTwin = model.ControlSystem(parTwin);
+ctrlTwin.rateFeedforwardsEnabled = false;
+ctrlCorr = model.ControlSystem(par);
+ctrlCorr.rateFeedforwardsEnabled = false;
+simTwin = model.Simulator(model.PowerPlant(parTwin), ctrlTwin, ...
+    model.LoadProfile.test1());
+simCorr = model.Simulator(model.PowerPlant(par), ctrlCorr, ...
+    model.LoadProfile.test1());
 
 % --- sample set ----------------------------------------------------------
 sv = model.StateVector;

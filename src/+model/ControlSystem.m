@@ -17,16 +17,33 @@ classdef ControlSystem < handle
 
     properties
         % Rate feedforward terms of the deaerator/reheat/superheat loops:
-        % the d/dt compensation signals of the thesis block diagrams,
-        % stubbed to zero (not implemented; see docs/next_steps.md).
+        % the d/dt compensation of the thesis block diagrams (FC2DV,
+        % FCP1ST, FCTRHO, FCXGG at the top of the listing's DERIV section,
+        % cards PAT10109-10116): backward differences of the c2dv, cp1st,
+        % ctrho and cxgg control signals. Refreshed once per committed
+        % integration step (derivatives called with commitDt > 0) and used
+        % frozen through that step's RK4 stages, so each step's algebra
+        % sees the rates of the previous committed step, as in the thesis.
         fc2dv  (1,1) double = 0
         fcp1st (1,1) double = 0
         fctrho (1,1) double = 0
         fcxgg  (1,1) double = 0
+        % Master switch for the rate feedforwards. The legacy-equivalence
+        % harness disables it: legacy digpte47 predates the implementation
+        % and stubs the four signals to zero (documented carve-out in
+        % deprecated/tools/validate_against_legacy.m).
+        rateFeedforwardsEnabled (1,1) logical = true
         % Gas recirculation loop enable. The thesis deactivated this loop
         % for Tests 6 and 7 ("the system took a much longer time to settle
         % ... occasionally put under manual control", p. 58).
         gasRecircEnabled (1,1) logical = true
+    end
+
+    properties (Access = private)
+        % [c2dv, cp1st, ctrho, cxgg] at the last committed step (empty
+        % until the first commit; the thesis initializes the previous
+        % values to the t=0 signals, so the first step's rates are zero).
+        ratePrev double = []
     end
 
     methods
@@ -74,8 +91,14 @@ classdef ControlSystem < handle
             u.aiv = 1.0;
         end
 
-        function xdot = derivatives(obj, s, u, sig, ldc)
+        function xdot = derivatives(obj, s, u, sig, ldc, commitDt)
             %DERIVATIVES Control-state derivatives (states 23-46).
+            %   commitDt > 0 marks a committed-trajectory evaluation (the
+            %   first RK4 stage of a step): the rate-feedforward memory is
+            %   then advanced by commitDt. Omitted or 0 leaves it frozen.
+            if nargin < 6
+                commitDt = 0;
+            end
             P = obj.par;
             xd = @model.ControlSystem.xducer;
             lim = @model.ControlSystem.limchk;
@@ -261,10 +284,58 @@ classdef ControlSystem < handle
             xdot(44) = c1tr/P.ktc1tr;
             xdot(45) = (c3tr - c4tr)/P.ktc2tr;
             xdot(46) = (c6tr - cacvd)/P.ktc3tr;
+
+            % rate-feedforward memory update (committed steps only): the
+            % listing's FC* = (C* - C*O)/TSTEP backward differences
+            if commitDt > 0 && obj.rateFeedforwardsEnabled
+                cur = [c2dv, cp1st, ctrho, cxgg];
+                if ~isempty(obj.ratePrev)
+                    d = (cur - obj.ratePrev)/commitDt;
+                    obj.fc2dv = d(1);
+                    obj.fcp1st = d(2);
+                    obj.fctrho = d(3);
+                    obj.fcxgg = d(4);
+                end
+                obj.ratePrev = cur;
+            end
+        end
+
+        function resetRates(obj)
+            %RESETRATES Zero the rate feedforwards and forget their memory.
+            %   Simulator.run calls this at the start of every run so a
+            %   reused controller does not difference across trajectories.
+            obj.fc2dv = 0;
+            obj.fcp1st = 0;
+            obj.fctrho = 0;
+            obj.fcxgg = 0;
+            obj.ratePrev = [];
         end
     end
 
     methods (Static)
+        function x = clampStates(x)
+            %CLAMPSTATES Saturate the control states (23-46) in place.
+            %   The thesis DERIV section passes each control state to
+            %   LIMCHK/CHECK (FORTRAN by-reference, cards PAT10380-10500),
+            %   so the stored states themselves saturate at their limits:
+            %   the integrators cannot wind up while a loop is railed.
+            %   Simulator applies this after every RK4 step; it is a no-op
+            %   while all control states are inside their ranges, which is
+            %   why derivative evaluations at interior points (and the
+            %   legacy pointwise equivalence) are unaffected.
+            sv = model.StateVector;
+            v15 = [sv.C3MD, sv.C5AR, sv.C5FL, sv.C3FN, sv.C2GR, ...
+                   sv.C2FT, sv.C7FV, sv.C8DV, sv.C5RH, sv.C5SY, ...
+                   sv.CARD, sv.CFLD, sv.CFND, sv.CGRD, sv.CFTD, ...
+                   sv.CFWD, sv.CDWD, sv.CXGGD, sv.CSYD];  % LIMCHK
+            x(v15) = min(max(x(v15), 1), 5);
+            v55 = [sv.C3FV, sv.C3DV];             % CHECK(., kn5, km5)
+            x(v55) = min(max(x(v55), -5), 5);
+            x(sv.C2TR) = min(max(x(sv.C2TR), -1), 1); % CHECK(., kn1, km1)
+            v05 = [sv.C4TR, sv.CACVD];            % CHECK(., kn5, kn0)
+            x(v05) = min(max(x(v05), 0), 5);
+        end
+
         function c = xducer(zmin, zmax, cmin, cmax, z)
             % Linear transducer with saturation.  (thesis XDUCER)
             c = cmin + (cmax - cmin)*(z - zmin)/(zmax - zmin);

@@ -5,73 +5,50 @@ all of them: `model.md` (model architecture, validation results, known
 offsets) and `thesis_notes.md` (thesis summary and FORTRAN-listing
 landmarks).
 
-## 1. The uniform fuel/air offset (main investigation)
+## 1. The uniform fuel/air offset — RESOLVED (Aug 2026)
 
-**Symptom.** The model needs ≈10% more fuel and air than the thesis's
-published steady states to hold the same steam conditions, at every load:
+The former main investigation is closed. The ≈10% extra fuel/air the
+model needed at every load was a one-character transcription slip in the
+convective heat-exchanger subroutine: the printed HXFER listing (card
+PAT11075) reads `SG=Z1+Z2*(TG1+TGO)` — the mean of the linear-in-T gas
+specific heat s(T) = z1 + 2·z2·T over inlet/outlet — while both ports had
+`(tg1 - tgo)`, under-counting the heat delivered to every convective
+surface. Fixed in `HeatTransfer.convective` and `deprecated/old/hxfer.m`
+(same both-sides treatment as the CRSTAT fix). After re-trimming:
 
-| Signal | This model | Thesis (Tables V.1–V.3) |
+| Signal at 77.5% trim | This model | Thesis Table V.2 |
 |---|---|---|
-| Fuel at 77.5% trim | 69.6 lb/s (cfld 4.10 V) | 63.3 lb/s (3.81 V) |
-| Air at 77.5% trim | 1068.9 lb/s | 972.1 lb/s |
-| Air/fuel ratio | 15.35 | 15.36 (same) |
-| Fuel at 50% trim | 46.5 lb/s | ~42 (Table V.3 scaled) |
-| 100% self-trimmed | air rails at 5 V, sags to ≈2000 psia | holds 2415 psia at 80.1 lb/s |
+| Fuel | 63.62 lb/s (3.828 V) | 63.3 lb/s (3.81 V) |
+| Air | 976.6 lb/s | 972.1 lb/s |
+| Main steam flow | 811.4 lb/s | 813.4 lb/s |
+| Drum pressure | 2602.1 psia | 2603.5 psia |
 
-The published 100% "match" (80.14 vs 80.1 lb/s) is the thesis ICs evaluated
-at t = 0; they are not an equilibrium of this model (residuals ~0.5 vs
-~1e-3 at the trimmed points). Every capability limit follows from this one
-offset: Test 4 tops out at ≈485 MW, Test 6 settles at ≈470 MW/1857 psia,
-and the self-trimmed 100% point saturates the same way.
+At the thesis 100% ICs the absorbed fraction is now 87.6% (was 80.0%,
+thesis-implied ≈88%) and the ICs are essentially an equilibrium
+(mwo = 599.0, psso = 2415.0 at wfl = 80.14; worst residual 0.17 vs ~0.5
+before). Verification byproducts: ARFLOW and FNXFER are transcription-
+clean against the scan (printed pp. 271–274), constants included.
 
-Already ruled out (Aug 2026 verification, details in `model.md` "Known
-quantitative offsets"): control-constant transcription bugs (all deck
-values verified against the scan), reheat-loop misbehavior (`trho` exactly
-on schedule, tilt inside its deadband at every trim), and the
-gas-recirculation level (fuel changes < 0.1% across its attractor band —
-the recirc offset is a consequence, not a cause). Also neutral: Appendix C
-schedules the reheat set point on `WSSO` where the program listing uses
-`WHP` (we follow the listing); identical at steady state.
+## 2. Test 4 limit cycle at the air ceiling (open)
 
-**Where the ~110k Btu/s at 77.5% actually goes (open):** our absorbed
-fraction is 80.0% of fuel heat at 77.5% (thesis-implied ≈88%), and the
-stack-side gas temperature *rises* from 100% to 77.5% (1105 → 1124 R)
-because total furnace gas flow at 77.5% exceeds the 100% value. Remaining
-concrete checks, in order of promise:
+Test 4 now reaches rated power (peaks ≈603–607 MW, pressure recovering to
+≈2435 psia each swing) but orbits the 100% point (≈565–605 MW, 2240–2440
+psia, ~400 s period) instead of settling like Figure V.7. Root cause of
+the residual: the 100% point needs air ≈ 15.35 × 80.1 ≈ 1230 lb/s, but
+the printed deck's air network delivers at most ≈1219 lb/s with both
+dampers full open at the IC fan speeds (`air_probe`: reaching 1230.3
+would need damper area ≈1.02). Thesis Table V.1 reports 1230.3 lb/s *at*
+its 100% steady state with the air control at only ≈4.55 V (Fig. V.7) —
+i.e. the thesis's published run had a few percent more air delivery at a
+given damper signal than its own printed listing provides. With zero air
+margin, the cross-limit caps fuel ≈1% short on average, the boiler
+integrates the deficit, and the tilt/spray/recirc loops swing along
+(tilt ±15°+, spray 3–64 lb/s over a cycle). Options if a settle is ever
+wanted: treat the air-side capacity constants as the remaining
+table-vs-listing inconsistency (unfalsifiable from the scan alone), or
+accept the cycle as this deck's faithful behavior.
 
-1. **Air/gas network verification (prime suspect).** At the exact thesis
-   100% IC state, `Hydraulics.airGas` delivers war = 1181.7 lb/s where
-   thesis Table V.1 reports 1230.3 (−4% at identical inputs). Verify
-   `Hydraulics.airGas` line-by-line against the printed thesis ARFLOW
-   (OCR has no ARFLOW header — find it in the listing; HXFER is at OCR
-   line ≈11078, AVERAG ≈11145), the way the CRSTAT anchoring slip was
-   caught (see `SteamTables.crossoverSteam`).
-2. **Furnace/convective chain verification.** Same treatment for
-   `HeatTransfer.furnace`/`convective` vs the printed listing (furnace
-   section in the main program ≈ OCR 9400–9600) — a CRSTAT-class
-   transcription slip in one absorption equation would explain the
-   uniform deficit directly.
-3. **Energy-balance audit completion.** Account for the full gas-side
-   ledger at 77.5% (absorptions + stack loss + the fixed-temperature air
-   heater `ktat/ktahad/ktapad` treatment) and identify the sink that eats
-   the extra ~110k Btu/s relative to the thesis-implied balance.
-4. **Feedwater-heating degradation (secondary, ~1% of fuel).** Our `hhho`
-   falls faster with load than the thesis's (441.4 vs 454.1 Btu/lb at
-   77.5%; 411.7 vs 437.3 at 50%; exact at 100%). Suspect the extraction /
-   heater chain (`hpext`/`ipext`/`lpext` fits, `qhh` with the raised
-   `hcro`). Also the likely driver of the slow `heco`/`hhho` trim drift
-   (section 3).
-5. **Fit-range check (deprioritized).** The CRSTAT cross-over enthalpy as
-   implemented (≈1380 Btu/lb at ≈173 psia/709 °F) is consistent with real
-   steam tables, so the anchoring choice is sound at this regime; a
-   broader sweep of the 16 fits vs steam tables remains useful hygiene.
-
-If 1–3 come back clean, the remaining explanation is that the thesis's
-published tables/figures were produced with a different code or data-deck
-version than the printed listing — unfalsifiable except by exhausting the
-listing verification.
-
-## 2. Coordinated Control Mode
+## 3. Coordinated Control Mode
 
 The thesis modeled it but ran all published tests boiler-following: the
 code carries the scheduled throttle set point `kpsso = k1pss + k2pss·ldc`
@@ -81,19 +58,18 @@ and then overrides it with the constant `k4pss = 2415` (see
 coordinated-mode experiments — sliding-pressure-style operation the thesis
 mentions but never plots.
 
-## 3. Smaller items
+## 4. Smaller items
 
-- **Rate feedforwards:** `fc2dv`, `fcp1st`, `fctrho`, `fcxgg` are stubbed
-  to zero. Implement them as proper filtered derivatives of `c2dv`,
-  `cp1st`, `ctrho`, `cxgg` (the thesis block diagrams' d/dt compensation)
-  and see whether the deaerator / temperature loops tighten.
-- **Boiler-master anti-windup:** the integrator state `c3md` grows without
-  bound whenever the pressure set point is unreachable (Tests 6, 7). Its
-  limited copy is what acts, so behavior is correct, but a conditional
-  integrator (stop integrating while `c4md` is clamped) would match the
-  analog hardware's saturation and keep states bounded. The gas-recirc
-  integrator `c2gr` can wind up the same way while the tilt is outside its
-  deadband.
+- ~~Rate feedforwards~~ DONE (Aug 2026): `fc2dv`, `fcp1st`, `fctrho`,
+  `fcxgg` are now per-step backward differences exactly as the listing's
+  DERIV section computes them (cards PAT10109–10116), refreshed on
+  committed steps. Note their deck gains are ±0.01, so the effect is
+  nearly negligible — they were not the Test 4 limit-cycle cause.
+- ~~Integrator anti-windup~~ DONE (Aug 2026): `Simulator.step` now applies
+  `ControlSystem.clampStates` after every RK4 step — the listing's
+  by-reference LIMCHK/CHECK write-back, which saturates the integrator
+  states themselves (c3md, c5ar, c2gr, c2tr, …) instead of only their
+  copies. States stay bounded in Tests 4/6/7.
 - **40% voltage-drop variant of Test 5:** thesis text (p. 55) says the
   condensate pumps then fail to meet demand and the deaerator level falls
   toward a trip — one line with `model.GridProfile` to reproduce.

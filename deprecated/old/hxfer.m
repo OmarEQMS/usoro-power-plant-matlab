@@ -14,7 +14,11 @@ z5=wg*z2;
 z6=z3+z4;
 z7=z3*tg1-ugs*tse-z5*tg1*tg1-z4*tg1;
 tgo=0.5*(sqrt(z6*z6-4*z5*z7)-z6)/z5;
-sg=z1+z2*(tg1-tgo);
+% SG=Z1+Z2*(TG1+TGO) in the printed listing (PAT11075): mean of the
+% linear-in-T gas specific heat s(T)=z1+2*z2*T over inlet/outlet, matching
+% the tgo quadratic above. A '-' here was a transcription slip (fixed with
+% the OOP model, Aug 2026).
+sg=z1+z2*(tg1+tgo);
 qc=wg*sg*(tg1-tgo);
 q=qc+qr;
 tme=tse+qc/ums;

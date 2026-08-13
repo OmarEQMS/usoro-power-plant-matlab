@@ -40,14 +40,20 @@ classdef Simulator < handle
             obj.grid = grid;
         end
 
-        function [xdot, sig, u] = derivative(obj, t, x)
+        function [xdot, sig, u] = derivative(obj, t, x, commitDt)
             %DERIVATIVE Full 47-state derivative f(t,x); also returns the
             %   plant signal struct and actuator commands for logging.
+            %   commitDt > 0 marks a committed-trajectory point: the
+            %   controller then advances its rate-feedforward memory.
+            if nargin < 4
+                commitDt = 0;
+            end
             s = model.StateVector.unpack(x);
             u = obj.control.actuatorCommands(s);
             g = struct('nelec', obj.grid.frequency(t), 'velec', obj.grid.voltage(t));
             [xdot, sig] = obj.plant.evaluate(s, u, g);
-            xdot = xdot + obj.control.derivatives(s, u, sig, obj.profile.demand(t));
+            xdot = xdot + obj.control.derivatives(s, u, sig, ...
+                obj.profile.demand(t), commitDt);
         end
 
         function [x, sig, u] = step(obj, t, x)
@@ -55,11 +61,15 @@ classdef Simulator < handle
             %   are evaluated at the *incoming* (t, x), so callers can log
             %   the pre-step point at no extra cost.
             h = obj.Ts;
-            [k1, sig, u] = obj.derivative(t, x);
+            [k1, sig, u] = obj.derivative(t, x, h);
             k2 = obj.derivative(t + h/2, x + (h/2)*k1);
             k3 = obj.derivative(t + h/2, x + (h/2)*k2);
             k4 = obj.derivative(t + h, x + h*k3);
             x = x + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+            % Limiter write-back: the thesis DERIV section saturates the
+            % control states in place (by-reference LIMCHK/CHECK), so the
+            % integrator states stop at their rails instead of winding up.
+            x = model.ControlSystem.clampStates(x);
         end
 
         function res = run(obj, x0, tEnd)
@@ -74,6 +84,8 @@ classdef Simulator < handle
             nSteps = round(tEnd/h);
             t = (0:nSteps)'*h;
             X = zeros(nSteps + 1, 47);
+            obj.control.resetRates();
+            x0 = model.ControlSystem.clampStates(x0);
             X(1, :) = x0';
             nLog = floor(tEnd/obj.logInterval) + 1;
             logRows = zeros(nLog, 25);

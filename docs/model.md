@@ -216,8 +216,10 @@ res = sim.run(model.InitialConditions.at100(), 700);
   `par2 = par; par2.kjtre = 2*par.kjtre;` then build a new plant with it.
 - **Control experiments:** subclass `ControlSystem` and override
   `derivatives` (or a future extracted per-loop method); the plant is
-  untouched. The rate-feedforward stubs (`fc2dv`, `fcp1st`, `fctrho`,
-  `fcxgg`) are public properties, so a subclass or script can supply them.
+  untouched. The rate feedforwards (`fc2dv`, `fcp1st`, `fctrho`, `fcxgg`)
+  are public properties maintained as the listing's per-step backward
+  differences (`rateFeedforwardsEnabled` turns them off), so a subclass
+  or script can also drive them directly.
 - **Different integrator:** `Simulator.derivative(t,x)` is public and
   side-effect-free — hand it to `ode45`/`ode15s` directly if wanted
   (`[tt,xx] = ode45(@(t,x) sim.derivative(t,x), [0 700], x0)`), keeping in
@@ -246,6 +248,15 @@ res = sim.run(model.InitialConditions.at100(), 700);
   pp. 152–153), a marginally stable oscillator at ≈1.8 rad/s: RK4 is
   (weakly) stable there, while explicit Euler diverges — do not swap in a
   lower-order explicit scheme.
+- **Two stepping-level behaviors of the FORTRAN are reproduced in
+  `Simulator.step`,** not in the pure RHS: (1) after every step the
+  control states are saturated in place (`ControlSystem.clampStates`) —
+  the listing passes them to LIMCHK/CHECK by reference, which is the
+  analog controllers' anti-windup; (2) the first (committed) stage
+  evaluation advances the rate-feedforward backward differences
+  (`fc2dv`/`fcp1st`/`fctrho`/`fcxgg`, deck gains ±0.01). Integrating the
+  bare `derivative` with an external solver skips both; expect windup
+  wherever a loop saturates.
 
 ## Load-ramp tests (thesis Tests 2, 3, 4)
 
@@ -255,30 +266,35 @@ All at the thesis 15%/min rate, starting from the trimmed operating points:
   power settles 299.9 MW with a 294 MW undershoot (thesis ≈298/295),
   throttle peaks 2441 → returns 2416 psia (thesis 2437 → 2415), main steam
   flow ends 529 lb/s (thesis ≈530).
-- **Test 3** (`test.run3`, 50% → 77.5%): power overshoots to 471.4 MW
-  (thesis ≈472) and settles 464; the throttle-pressure dip is deeper than
-  the thesis (2218 vs ≈2354 psia) and still converging at 700 s —
-  consistent with the thesis observation that load *increases* are harder.
-- **Test 4** (`test.run4`, 77.5% → 100%): the thesis already calls this
-  run only "fairly well behaved" (signals saturate, power lags demand).
-  In this model the effect is stronger: governor and air demands rail at
-  5 V, fuel is held back by the air cross-limit, and the plant tops out
-  near **485 MW at ≈1906 psia** instead of recovering to 600 MW / 2415.
-  Mechanism: the model's ≈10% higher air/fuel requirement hits the 5 V
-  air rail below rated firing — see "Known quantitative offsets" below.
+- **Test 3** (`test.run3`, 50% → 77.5%): power overshoots to 477.2 MW
+  (thesis ≈472) and settles 464.9; the throttle-pressure dip now matches
+  the thesis (2339 vs ≈2354 psia) and pressure returns to 2415 within the
+  700 s window.
+- **Test 4** (`test.run4`, 77.5% → 100%): the thesis calls this run only
+  "fairly well behaved" (signals saturate, power lags demand, no
+  overshoot). This model reproduces the climb quantitatively — at the
+  thesis's 700 s horizon it reads 603 MW at 2433 psia with main steam
+  flow ≈1110 lb/s (thesis Fig. V.7: 600 MW, 2415 psia, ≈1110 lb/s; the
+  100% steady state *is* a ≈1110 lb/s point per Table V.1) — but run
+  longer it cycles slowly around the rated point (≈565–605 MW, 2240–2440
+  psia, ~400 s period) instead of locking on. The 100% point needs
+  ≈101% of the air the printed deck can deliver at the 5 V damper rail,
+  so the air cross-limit keeps engaging — see "Known quantitative
+  offsets" below.
 
 ## Fan-loss test (thesis Test 7)
 
 `test.run7`: at 100% load, one of the two FD+ID fan pairs is lost at
 t = 10 s (no Unit Run-Back; gas recirculation off as in the thesis run).
 The fan count is a configuration constant (`knfd`/`knid`), so the script
-stitches two phases at t = 10 s. Results track Figure V.11 closely:
+stitches two phases at t = 10 s. Results track Figure V.11, recovering
+slightly *higher* than the figure since the HXFER fix:
 
 | Variable | This model | Thesis Fig. V.11 |
 |---|---|---|
-| Power dip / recovery | 364.7 → 419.2 MW | ≈371 → ≈420 |
-| Throttle pressure min / end | 1531 / 1679 psia | ≈1560 / ≈1700 |
-| Main steam flow min / end | 685 / 749 lb/s | ≈690 / ≈770 |
+| Power dip / recovery | 398.3 → 440.4 MW | ≈371 → ≈420 |
+| Throttle pressure min / end | 1643 / 1766 psia | ≈1560 / ≈1700 |
+| Main steam flow min / end | 735 / 798 lb/s | ≈690 / ≈770 |
 | Air control / governor | rail at 5 V | rail at 5 V |
 | Turbine speed | flat 377 | flat 377 |
 
@@ -286,30 +302,37 @@ stitches two phases at t = 10 s. Results track Figure V.11 closely:
 
 ## Known quantitative offsets
 
-The model needs ≈10% more fuel and air than the thesis's published steady
-states to hold the same steam conditions, at *every* load — e.g. at the
-77.5% trim it burns 69.6 lb/s vs the thesis Table V.2's 63.3, with the
-air/fuel ratio identical (15.36) so the air offset is the same +10%. At
-100% the extra requirement exceeds the 5 V air rail, so the model cannot
-hold the 100% point steady at all (self-trimmed at ldc = 5 it sags to
-≈2000 psia; the published 100% "match" is just the thesis ICs evaluated at
-t = 0, which are not an equilibrium of this model — residuals ~0.5 there
-vs ~1e-3 at the trimmed points). Tests that push toward maximum capability
-(4, 6, 7) therefore saturate earlier or settle deeper than the thesis
-figures, while their transient shapes and mechanisms match. Tests 1, 2, 3
-and 5, which stay inside the control range, match quantitatively.
+The historic ≈10% fuel/air offset is **resolved** (Aug 2026): it was a
+one-character transcription slip in the convective heat-exchanger
+subroutine. The printed HXFER listing (card PAT11075) reads
+`SG=Z1+Z2*(TG1+TGO)` — the mean of the linear-in-temperature gas specific
+heat s(T) = z1 + 2·z2·T across the exchanger, consistent with the
+subroutine's own gas-outlet-temperature quadratic — while the port had
+`(tg1 - tgo)`, under-counting the heat delivered to the primary/secondary
+superheater, reheater and economizer at every load. The fix (applied to
+both `HeatTransfer.convective` and `deprecated/old/hxfer.m`, like the
+CRSTAT fix) raises the absorbed fraction at the 100% ICs from 80.0% to
+87.6% (thesis-implied ≈88%) and makes the thesis p. 288 ICs essentially an
+equilibrium (mwo 599.0, psso 2415.0 at the thesis's own 80.14 lb/s fuel).
+The re-trimmed operating points now sit on the thesis's published steady
+states: at 77.5%, fuel 63.62 lb/s vs Table V.2's 63.3, air 976.6 vs 972.1,
+main steam flow 811.4 vs 813.4, drum pressure 2602.1 vs 2603.5.
 
-An Aug 2026 verification session (see [next_steps.md](next_steps.md))
-established what the offset is *not*: every constant in the tilt,
-gas-recirculation, reheat, superheat and boiler-master chains matches the
-thesis data deck exactly (verified against the scanned pages, including
-the previously OCR-garbled gas-recirc gains), the reheat temperature sits
-exactly on its schedule at all three operating points, and the fuel level
-is insensitive to the gas-recirculation level (re-seeding the recirc
-integrator at the thesis value changes fuel by < 0.1%). The strongest
-remaining lead is the air/gas flow network: at the exact thesis 100% IC
-state our `Hydraulics.airGas` delivers 1181.7 lb/s of air where thesis
-Table V.1 reports 1230.3 (−4%).
+The one *remaining* documented inconsistency is on the air side, and it is
+between the thesis's published tables and its own printed listing: thesis
+Table V.1 reports 1230.3 lb/s of air at the 100% steady state with the air
+control at only ≈4.55 V (Fig. V.7), but the printed ARFLOW/deck (verified
+transcription-clean against the scan, constants included) delivers at most
+≈1219 lb/s with both dampers *full open* at the IC fan speeds — reaching
+1230.3 would take damper area ≈1.02. Since the 100% point needs
+air ≈ 15.35 × 80.1 ≈ 1230 lb/s, this model runs that point with zero air
+margin: Test 4 arrives at rated power but cycles around it (the air
+cross-limit caps fuel ≈1% short on average, the boiler integrates the
+deficit, and the tilt/spray/recirc loops swing along), and the
+frequency-depressed Tests 6/7 settle somewhat deeper than the thesis
+figures. Verified *not* the cause (Aug 2026 sessions): every control-deck
+constant against the scan, the reheat schedule, the gas-recirculation
+level, ARFLOW, FNXFER, and HXFER (post-fix).
 
 The gas-recirculation level itself is only loosely pinned by the plant:
 the recirc integrator acts only while the burner tilt is outside its ±5°
@@ -344,14 +367,15 @@ barely moves:
 t = 10 s; gas recirculation control deactivated as in the thesis run.
 Turbine speed drops with the grid to 351.9 rad/s exactly as in Figure V.10;
 governor and air-flow controls rail at 5 V (as in the thesis); the fast
-transient matches quantitatively (power spike 562 MW vs ≈563; steam-flow
-peak 1043 lb/s vs ≈1040). The sustained depression is deeper than the
-thesis (settles ≈470 MW at ≈1857 psia vs 537 MW at 2125 psia) because this
-model's 77.5% operating point runs closer to the air/fuel signal rails
-(see "Known quantitative offsets"), so the frequency-limited fans cap
-firing at a lower level. Note the boiler-master integrator state (`c3md`)
-winds up without bound while the pressure set point is unreachable — its
-*limited* copy is what acts.
+transient matches quantitatively (power spike 563.3 MW vs ≈563;
+steam-flow peak 1043.8 lb/s vs ≈1040). The sustained depression is
+somewhat deeper than the thesis (settles ≈515 MW at ≈2035 psia vs 537 MW
+at 2125 psia; before the HXFER fix it was 470/1857): with the grid
+frequency down 4 Hz the fans are speed-limited, and this deck has no air
+margin at high load (see "Known quantitative offsets"), so firing caps a
+little lower. The control integrator states stay bounded: `Simulator`
+applies the listing's by-reference limiter write-back
+(`ControlSystem.clampStates`) after every step.
 
 ![Test 6 overview](img/test6_overview.png)
 
@@ -383,12 +407,18 @@ directly through the pump/fan slow-down time constants.
 
 - **Constants:** all 306 `Parameters` values verified against the thesis
   data-deck scan (printed pp. 275–286), Aug 2026.
-- **100% initial conditions:** the thesis p. 288 state reproduces the
-  Table V.1 steady-state signals at t = 0 (throttle 2415 psia, main steam
-  flow 1109.2 lb/s, both steam temperatures 1000 °F, fuel 80.1 lb/s).
+- **100% initial conditions:** the thesis p. 288 state is a near-
+  equilibrium of the model since the HXFER fix (worst residual 0.17;
+  mwo 599.0, psso 2415.0 at the thesis's 80.14 lb/s fuel). One thesis-
+  internal inconsistency to know about: evaluated through the verified
+  valve/turbine equations the IC state passes 852.6 lb/s of main steam,
+  while Table V.1 lists 1109.2 lb/s for the same nominal point — and the
+  post-ramp Test 4 equilibrium indeed runs at ≈1110 lb/s. The two are
+  different near-equilibria; the tables/figures side is what the tests
+  reproduce.
 - **The seven emergency tests** reproduce thesis Figures V.1–V.11 as
-  documented per-test above: Tests 1, 2, 3, 5, 7 quantitatively; Tests 4
-  and 6 with the documented capability offset ("Known quantitative
-  offsets").
+  documented per-test above: Tests 1, 2, 3, 5 quantitatively; Test 7
+  slightly above the figure; Tests 4 and 6 with the documented air-margin
+  residual ("Known quantitative offsets").
 - **Runtime:** a full 700 s Test 1 runs in ≈18 s
   (`Simulator.run`, RK4 at 0.1 s, R2026a).
