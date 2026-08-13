@@ -68,6 +68,18 @@ banks eat first*, in code as in physics. The last outlet, `tecgo`, is
 the [stack-side temperature](@plant/economizer-airheater) the
 efficiency ledger cares about.
 
+## The sign that carries the boiler
+
+One line deserves special attention when auditing this method: the
+mean gas specific heat over a bank is
+`sg = z1 + z2*(tg1 + tgo)` — a **plus**, because the fitted specific
+heat is linear in temperature (s(T) = z1 + 2·z2·T) and the mean over
+inlet and outlet keeps the sum. The sign is load-bearing: it sets the
+heat every bank delivers, and it is self-checkable — the subroutine's
+own outlet-temperature quadratic embeds the same `+`, so the two must
+agree. The [model changelog](@plant/changelog) records what happens
+when they don't.
+
 ::: caution
 The transfer coefficients are constants — design-point values with no
 flow or temperature dependence

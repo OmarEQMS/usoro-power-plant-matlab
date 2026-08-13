@@ -29,9 +29,12 @@ and fuel *jointly* — the master never touches a damper or a valve
 itself.
 
 The master's integrator is the plant's designated
-[windup victim](@basics/control-basics): whenever a test makes
-2415 psia unreachable (Tests 6, 7), `c3md` climbs without bound while
-its clamped copy holds the real demand at the rail.
+[saturation victim](@basics/control-basics): whenever a test makes
+2415 psia unreachable (Tests 4, 6, 7), `c3md` pins at its 5 V rail.
+It cannot wind up past it — the original FORTRAN clamps the integrator
+*state itself* in place (its limiter subroutines act by reference), an
+anti-windup the model reproduces by saturating the control states
+after every integration step.
 
 ## Air and fuel: the cross-limited pair
 
@@ -76,9 +79,9 @@ steam-side. When the tilt is content, this loop is frozen scenery.
 Put it together for Test 6 (frequency drop): fans slow → `war` falls →
 fuel cross-limit clamps `cfld` → steam production falls → `psso` sags →
 master demand climbs → air demand rails at 5 V (it is already asking
-for more than the fans can give) → `c3md` winds up → the plant settles
-where *air* says it settles, ≈470 MW. Five loops, one bottleneck,
-no drama — which is the design's whole point.
+for more than the fans can give) → `c3md` saturates at its rail → the
+plant settles where *air* says it settles, ≈515 MW. Five loops, one
+bottleneck, no drama — which is the design's whole point.
 
 ::: code-map Where this page lives in the code
 | Concept | Code | Where |

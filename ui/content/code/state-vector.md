@@ -95,9 +95,12 @@ The [two primitive elements](@basics/control-basics), loop by loop
 | 45 | `c4tr` | demand lag | turbine |
 | 46 | `cacvd` | actuator lag → `agv` | turbine (governor) |
 
-All 24 live on the [1–5 V scale](@basics/control-practices). The
-integrators can wind up past the rails (their *clamped copies* act);
-the lags are what the plant physically sees.
+All 24 live on the [1–5 V scale](@basics/control-practices) (two
+trims range wider: `c3fv`/`c3dv` on ±5 V, `c2tr` on ±1 V). The stored
+states themselves saturate at those rails — `Simulator.step` applies
+`ControlSystem.clampStates` after every step, reproducing the
+FORTRAN's by-reference limiter calls — and the lags are what the
+plant physically sees.
 
 ::: caution
 The ordering is thesis canon — never a free choice. The initial

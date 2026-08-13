@@ -64,15 +64,19 @@ $$x_{k+1} = x_k + \tfrac{h}{6}\big(k_1 + 2k_2 + 2k_3 + k_4\big)$$
 :::
 
 ```matlab
-[k1, sig, u] = obj.derivative(t, x);
+[k1, sig, u] = obj.derivative(t, x, h);   % committed call: rate ff advance
 k2 = obj.derivative(t + h/2, x + (h/2)*k1);
 k3 = obj.derivative(t + h/2, x + (h/2)*k2);
 k4 = obj.derivative(t + h, x + h*k3);
 x = x + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+x = model.ControlSystem.clampStates(x);   % limiter write-back (anti-windup)
 ```
 
 That is `Simulator.step`, verbatim — and it is also, to the step size,
-exactly what the thesis' own integration program (DYSYS) did in 1977.
+exactly what the thesis' own integration program (DYSYS) did in 1977,
+right down to the two trailing details: DYSYS' limiter subroutines
+saturated the stored control states in place, and its rate
+feedforwards were per-call backward differences.
 The blend buys two things: fourth-order *accuracy* (halving $h$ cuts
 error ~16×), and — decisive here — a **stability region that includes
 the imaginary axis** up to $|\omega h| \le 2\sqrt2$. Undamped

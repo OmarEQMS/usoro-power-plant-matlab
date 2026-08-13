@@ -43,9 +43,9 @@ The [deaerator](@plant/feedwater-train) swells and flashes like the
 drum (same vessel mathematics), and its loop (states 31/32/41) uses
 the same medicine in smaller doses: level PI plus condensate
 pressure/flow trim terms, acting on the condensate admission valve
-`adv`. Its rate feedforward (`fc2dv`) is one of the thesis' stubbed
-d/dt terms — [left zero](@basics/control-basics) in the model as in
-the original code.
+`adv`. Its rate feedforward (`fc2dv`) is one of the thesis' d/dt
+compensation terms, implemented as the listing computes them — a
+per-step backward difference of the level-error signal.
 
 ## Feed pump turbine: pressure follower
 
@@ -65,9 +65,9 @@ Main steam temperature `tsso` against its
 34/43), out to the [desuperheater spray](@plant/superheaters) `wsy`.
 The loop fights the superheater's minutes-long thermal lag; its
 structure includes rate feedforwards from first-stage pressure and
-tilt (`fcp1st`, `fcxgg`) — both stubbed to zero, so the model's loop
-is a touch slower than the thesis diagrams intend. It shows: watch
-`csyd` work hard in the load ramps.
+tilt (`fcp1st`, `fcxgg`), implemented as the listing's backward
+differences — though their deck gains are ±0.01, so they barely move
+the loop. It shows: watch `csyd` work hard in the load ramps.
 
 ## Reheat temperature: the tilt
 

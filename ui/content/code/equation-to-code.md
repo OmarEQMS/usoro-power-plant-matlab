@@ -107,7 +107,7 @@ kctrh = xd(P.ktrhol, P.ktrhou, P.kcl, P.kcu, ktrh);      % set point, in volts
 **Error and PI** ([control basics](@basics/control-basics)):
 
 ```matlab
-c3rh = c1rh + c2rh - ctrho;      % error (c1rh = kctrh; c2rh = stubbed ff)
+c3rh = c1rh + c2rh - ctrho;      % error (c1rh = kctrh; c2rh = rate ff)
 c4rh = c3rh*P.kc1rh;             % proportional
 c5rh = lim(s.c5rh);              % integrator state, clamped copy
 c6rh = c4rh + c5rh;              % PI sum

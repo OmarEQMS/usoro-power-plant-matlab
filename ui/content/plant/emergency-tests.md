@@ -29,7 +29,7 @@ pressure dips, combustion repays.
 | 1 | 100% → 77.5% | power tracking, pressure recovery to 2415, drum [swell](@plant/waterwalls-drum) | quantitative (Fig. V.1) |
 | 2 | 77.5% → 50% | same, deeper; [temperature schedules](@basics/control-practices) come off their clamps | quantitative (Fig. V.3) |
 | 3 | 50% → 77.5% | load *increase* — harder: deeper pressure dip, slow convergence | quantitative (Fig. V.5) |
-| 4 | 77.5% → 100% | the capability ceiling: governor and air rail at 5 V | saturates at ≈485 MW vs thesis 600 (the documented offset) |
+| 4 | 77.5% → 100% | the capability ceiling: governor and air rail at 5 V | reaches rated (603 MW / 2433 psia at 700 s, Fig. V.7 ≈600 / 2415), then cycles ±20 MW around it (the air-margin residual) |
 
 ## The electrical emergencies (Tests 5–6)
 
@@ -40,13 +40,13 @@ The grid reaching into the plant through the
 | Test | Scenario | Watch | Match |
 |---|---|---|---|
 | 5 | 30% line-voltage step drop | motor torque ∝ V²: [fans and pumps](@basics/rotating-machinery) sag and re-settle; steam side barely moves | quantitative (Fig. V.9) |
-| 6 | frequency 60 → 56 Hz in 5 s | turbine dragged to 352 rad/s; [droop](@plant/loops-turbine) rails the governor; fans slow → [cross-limit](@plant/loops-combustion) caps fuel | fast transient quantitative; settles ≈470 MW vs thesis 537 (offset) |
+| 6 | frequency 60 → 56 Hz in 5 s | turbine dragged to 352 rad/s; [droop](@plant/loops-turbine) rails the governor; fans slow → [cross-limit](@plant/loops-combustion) caps fuel | fast transient quantitative (spike 563 vs ≈563 MW); settles ≈515 MW vs thesis 537 (air-margin residual) |
 
 ## The equipment loss (Test 7)
 
 | Test | Scenario | Watch | Match |
 |---|---|---|---|
-| 7 | one FD+ID [fan pair lost](@plant/air-gas-path) at 100% | power dive and air-limited recovery; drum level's double deception; no run-back logic | close (dip 365 vs ≈371 MW, recovery ≈420) |
+| 7 | one FD+ID [fan pair lost](@plant/air-gas-path) at 100% | power dive and air-limited recovery; drum level's double deception; no run-back logic | close, slightly *above* the figure (dip 398 vs ≈371 MW, recovery 440 vs ≈420) |
 
 Two configuration notes reproduced from the thesis: gas recirculation
 control is **deactivated** in Tests 6 and 7 (the thesis reports the
@@ -66,14 +66,19 @@ Tests 2–7 start from trimmed operating points — run
 [dashboard](@code/tests-and-app) runs the same scenarios interactively.
 
 ::: caution
-The honest ledger, in one place: Tests 1, 2, 3, 5 and 7 reproduce the
-thesis figures quantitatively. Tests 4 and 6 — the two that probe
-*maximum capability* — saturate earlier and settle lower, because this
-model needs ≈10% more fuel and air than the thesis' published steady
-states at every load. The transient *mechanisms* match throughout; the
-capability margins are this model's own. The discrepancy is an open,
-documented investigation (the air/gas network is the prime suspect),
-not a hidden defect.
+The honest ledger, in one place. The trimmed operating points sit on
+the thesis' published tables (77.5%: fuel 63.6 vs 63.3 lb/s, air 977
+vs 972). Tests 1, 2, 3 and 5 reproduce the figures quantitatively and
+Test 7 recovers slightly above its figure. The one residual is **air
+margin** in the two maximum-capability tests: the 100% point needs
+≈1230 lb/s of air but the printed deck's fans and dampers deliver at
+most ≈1219 fully open — thesis Table V.1 claims 1230.3 at only
+≈4.55 V, so the published run had a few percent more air than the
+printed listing provides. With zero margin, Test 4 cycles slowly
+around rated power instead of locking on, and Test 6 settles ≈4%
+below its figure. A thesis-internal inconsistency, not a hidden
+defect — the [model changelog](@plant/changelog) has the full
+residuals list and the corrections that came before it.
 :::
 
 ::: code-map Where this page lives in the code
@@ -85,5 +90,6 @@ not a hidden defect.
 | standard plots | `Simulator.plotStandard(res)` | `model.Simulator` |
 :::
 
-This closes the Power Plant section. The [Code section](@code/tour)
-retraces the same machine, file by file.
+One page remains in this section: the
+[model changelog](@plant/changelog) — the corrections it took to make
+every claim on this page true.

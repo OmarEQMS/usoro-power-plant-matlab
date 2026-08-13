@@ -5,33 +5,14 @@ all of them: `model.md` (model architecture, validation results, known
 offsets) and `thesis_notes.md` (thesis summary and FORTRAN-listing
 landmarks).
 
-## 1. The uniform fuel/air offset — RESOLVED (Aug 2026)
+Resolved investigations (the HXFER fuel/air offset chief among them) are
+recorded in `model.md` ("Known quantitative offsets") and on the site's
+changelog page (`ui/content/plant/changelog.md`); this file lists only
+what is still open.
 
-The former main investigation is closed. The ≈10% extra fuel/air the
-model needed at every load was a one-character transcription slip in the
-convective heat-exchanger subroutine: the printed HXFER listing (card
-PAT11075) reads `SG=Z1+Z2*(TG1+TGO)` — the mean of the linear-in-T gas
-specific heat s(T) = z1 + 2·z2·T over inlet/outlet — while both ports had
-`(tg1 - tgo)`, under-counting the heat delivered to every convective
-surface. Fixed in `HeatTransfer.convective` and `deprecated/old/hxfer.m`
-(same both-sides treatment as the CRSTAT fix). After re-trimming:
+## 1. Test 4 limit cycle at the air ceiling
 
-| Signal at 77.5% trim | This model | Thesis Table V.2 |
-|---|---|---|
-| Fuel | 63.62 lb/s (3.828 V) | 63.3 lb/s (3.81 V) |
-| Air | 976.6 lb/s | 972.1 lb/s |
-| Main steam flow | 811.4 lb/s | 813.4 lb/s |
-| Drum pressure | 2602.1 psia | 2603.5 psia |
-
-At the thesis 100% ICs the absorbed fraction is now 87.6% (was 80.0%,
-thesis-implied ≈88%) and the ICs are essentially an equilibrium
-(mwo = 599.0, psso = 2415.0 at wfl = 80.14; worst residual 0.17 vs ~0.5
-before). Verification byproducts: ARFLOW and FNXFER are transcription-
-clean against the scan (printed pp. 271–274), constants included.
-
-## 2. Test 4 limit cycle at the air ceiling (open)
-
-Test 4 now reaches rated power (peaks ≈603–607 MW, pressure recovering to
+Test 4 reaches rated power (peaks ≈603–607 MW, pressure recovering to
 ≈2435 psia each swing) but orbits the 100% point (≈565–605 MW, 2240–2440
 psia, ~400 s period) instead of settling like Figure V.7. Root cause of
 the residual: the 100% point needs air ≈ 15.35 × 80.1 ≈ 1230 lb/s, but
@@ -48,7 +29,7 @@ wanted: treat the air-side capacity constants as the remaining
 table-vs-listing inconsistency (unfalsifiable from the scan alone), or
 accept the cycle as this deck's faithful behavior.
 
-## 3. Coordinated Control Mode
+## 2. Coordinated Control Mode
 
 The thesis modeled it but ran all published tests boiler-following: the
 code carries the scheduled throttle set point `kpsso = k1pss + k2pss·ldc`
@@ -58,24 +39,16 @@ and then overrides it with the constant `k4pss = 2415` (see
 coordinated-mode experiments — sliding-pressure-style operation the thesis
 mentions but never plots.
 
-## 4. Smaller items
+## 3. Smaller items
 
-- ~~Rate feedforwards~~ DONE (Aug 2026): `fc2dv`, `fcp1st`, `fctrho`,
-  `fcxgg` are now per-step backward differences exactly as the listing's
-  DERIV section computes them (cards PAT10109–10116), refreshed on
-  committed steps. Note their deck gains are ±0.01, so the effect is
-  nearly negligible — they were not the Test 4 limit-cycle cause.
-- ~~Integrator anti-windup~~ DONE (Aug 2026): `Simulator.step` now applies
-  `ControlSystem.clampStates` after every RK4 step — the listing's
-  by-reference LIMCHK/CHECK write-back, which saturates the integrator
-  states themselves (c3md, c5ar, c2gr, c2tr, …) instead of only their
-  copies. States stay bounded in Tests 4/6/7.
 - **40% voltage-drop variant of Test 5:** thesis text (p. 55) says the
   condensate pumps then fail to meet demand and the deaerator level falls
   toward a trip — one line with `model.GridProfile` to reproduce.
-- **Slow trim drift:** the trim residuals never reach zero (`heco`/`hhho`
-  drift ~1e-3 at 50%). Likely the same economizer/heater-chain imbalance
-  as investigation item 4 above.
+- **Slow trim drift / deaerator offset:** the trim residuals never reach
+  zero (`heco`/`hhho` drift ~1e-3 at 50%), and deaerator pressure sits a
+  few psi under Table V.2 (45.3 published vs ≈42 at 77.5%). Both point at
+  a small feedwater-heater/extraction-chain imbalance
+  (`hpext`/`ipext`/`lpext` fits, `qhh`).
 - **DYSYS TSTEP curiosity:** the thesis's run deck (printed p. 288) says
   `TSTEP=0.4`, while the text (p. 49) describes RK4 at 0.1 s. Worth a note
   if integration-step sensitivity ever comes up; RK4 at 0.1 s is what this

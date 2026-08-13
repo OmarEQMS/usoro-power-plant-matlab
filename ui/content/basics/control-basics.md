@@ -102,11 +102,18 @@ classic pathology:
 If the actuator saturates while error persists, the integrator keeps
 accumulating a command the hardware cannot deliver. When conditions
 finally improve, the wound-up integral must unwind before the actuator
-moves off its limit — the plant overshoots or hangs at the rail. The
-model's boiler-master integrator (`c3md`) winds up without bound in
-Tests 6 and 7 (the pressure set point is unreachable); its *clamped
-copy* is what acts, so behavior stays correct while the raw state grows.
+moves off its limit — the plant overshoots or hangs at the rail.
 :::
+
+Analog hardware gets its cure for free: a physical integrator *is* its
+own output, so it stops at its rail. The thesis FORTRAN inherits the
+cure by passing the integrator states to its limiter subroutines by
+reference — the stored state itself saturates — and the model
+reproduces that by clamping the control states after every integration
+step (`ControlSystem.clampStates`). So when Tests 4, 6 and 7 make the
+pressure set point unreachable, the boiler-master integrator (`c3md`)
+pins at 5 V and releases the instant the error reverses, instead of
+winding up past the rail.
 
 ::: code-map Where this page lives in the code
 | Concept | Code | Where |
@@ -114,6 +121,7 @@ copy* is what acts, so behavior stays correct while the raw state grows.
 | PI integrators (12 states) | `xdot(23–34, 44)` pattern `= cXyz/P.ktc1yz` | `model.ControlSystem` |
 | actuator lags (10 states) | `xdot(35–43, 46)` pattern `= (cmd − state)/tau` | `model.ControlSystem` |
 | clamping | `limchk` (1–5 V), `check` (arbitrary bounds) | `model.ControlSystem` |
+| anti-windup (state clamp) | `clampStates`, applied per step | `model.ControlSystem`, `Simulator.step` |
 | time constants | `ktc1*`, `ktc2*` families | `model.Parameters` |
 :::
 

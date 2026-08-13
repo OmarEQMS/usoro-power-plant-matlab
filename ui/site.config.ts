@@ -59,6 +59,7 @@ export const sections: SectionDef[] = [
       { id: 'plant/loops-steam', title: 'Steam-side control loops' },
       { id: 'plant/loops-turbine', title: 'Turbine control and the governor' },
       { id: 'plant/emergency-tests', title: 'The seven emergency tests' },
+      { id: 'plant/changelog', title: 'Model changelog' },
     ],
   },
   {

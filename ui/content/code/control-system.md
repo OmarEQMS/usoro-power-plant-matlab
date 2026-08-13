@@ -62,14 +62,18 @@ against them, the method reads as a checklist.
 
 ## The configuration surface
 
-Four public properties modify behavior without subclassing:
+A handful of public properties modify behavior without subclassing:
 
 - `gasRecircEnabled` — the [deadband loop's](@plant/loops-combustion)
   master switch; Tests 6 and 7 set it `false`, as the thesis did;
-- `fc2dv`, `fcp1st`, `fctrho`, `fcxgg` — the
-  [stubbed rate feedforwards](@basics/control-basics), zero by
-  default; supply them from a subclass or script to experiment with
-  the thesis' d/dt compensation.
+- `fc2dv`, `fcp1st`, `fctrho`, `fcxgg` — the thesis'
+  [rate feedforwards](@basics/control-basics), maintained as the
+  listing's per-step backward differences whenever the `Simulator`
+  steps (their deck gains are ±0.01, so the effect is small); a
+  subclass or script can also drive them directly;
+- `rateFeedforwardsEnabled` — turns that bookkeeping off (the
+  legacy-equivalence harness does, matching the archived flat-script
+  model that predates the implementation).
 
 For deeper experiments, subclass and override `derivatives` — the
 plant never knows. The boiler master's [set-point
@@ -85,12 +89,16 @@ order), and the `xducer` linear map. They are the entire vocabulary of
 every test trace is one of these calls binding.
 
 ::: caution
-Integrator states are *not* clamped — their limited copies act
-(`c5rh = lim(s.c5rh)` and kin), so integrators
-[wind up](@basics/control-basics) freely while saturated (`c3md` in
-Tests 6/7 famously so). This is faithful to the thesis code; treat
-large integrator excursions in trajectories as saturation telemetry,
-not as bugs.
+The limited copies in the loop algebra (`c5rh = lim(s.c5rh)` and kin)
+are only half of the thesis' saturation story. The FORTRAN passes the
+integrator states to LIMCHK/CHECK *by reference*, so the stored states
+themselves stop at their rails — analog hardware's free
+[anti-windup](@basics/control-basics). The static `clampStates` method
+reproduces that: `Simulator.step` applies it after every RK4 step, so
+integrator states stay bounded even through the long saturations of
+Tests 4, 6 and 7. If you integrate the bare `derivative` with an
+external solver, that write-back is skipped and integrators will wind
+up freely.
 :::
 
 ::: code-map Where this page lives in the code

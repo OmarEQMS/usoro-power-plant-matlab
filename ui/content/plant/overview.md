@@ -175,10 +175,13 @@ job is to keep throttle pressure at its 2415 psia set point by adjusting
 firing.
 
 ::: caution
-The model reproduces the thesis' transient behavior quantitatively on most
-tests, but it needs about 10% more fuel and air than the thesis' published
-steady states — an open investigation documented in the repository. Pages
-in this section quote design values with that caveat where it matters.
+The model reproduces the thesis' transient behavior quantitatively, and
+its trimmed operating points sit on the thesis' published steady-state
+tables. One documented residual: the printed deck's air path has zero
+margin at rated load, so the two maximum-capability tests (4 and 6)
+hunt or settle slightly under their figures. Pages in this section
+quote design values as published; the corrections it took to get here
+are recorded in the [model changelog](@plant/changelog).
 :::
 
 The remaining pages of this section are being written; their scope is

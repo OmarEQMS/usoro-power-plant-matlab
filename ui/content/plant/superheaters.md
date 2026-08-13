@@ -24,10 +24,10 @@ control's defining problems.
 
 Drum steam flows first through the **primary superheater** (states 8/9:
 `rpso`, `hpso`), the bank sitting closest to the furnace exit — it takes
-the hottest gas, absorbs `qps` ≈ 174,000 Btu/s at full load, and is the
+the hottest gas, absorbs `qps` ≈ 205,000 Btu/s at full load, and is the
 one bank that also receives direct furnace radiation (`qpsr`, from the
 [furnace page](@plant/furnace)). Then through the **secondary
-superheater** (states 10/11: `rsso`, `hsso`), absorbing `qss` ≈ 209,000
+superheater** (states 10/11: `rsso`, `hsso`), absorbing `qss` ≈ 243,000
 Btu/s and delivering main steam to the throttle at 2415 psia / 1000 °F.
 Each stage is the standard
 [mass + energy balance pair](@basics/mass-energy-balances) with its
@@ -69,8 +69,8 @@ temperature control.
 | Quantity | Value |
 |---|---|
 | Main steam out | 1109 lbm/s, 2415 psia, 1000 °F (h = 1460 Btu/lbm) |
-| Primary absorption `qps` (+ radiant `qpsr`) | ≈174,000 Btu/s |
-| Secondary absorption `qss` | ≈209,000 Btu/s |
+| Primary absorption `qps` (+ radiant `qpsr`) | ≈205,000 Btu/s |
+| Secondary absorption `qss` | ≈243,000 Btu/s |
 | Spray `wsy` range | 0–100 lbm/s |
 | Fill volumes (primary / secondary) | 2000 / 3000 ft³ |
 | Metal masses | 350,000 / 800,000 lbm |

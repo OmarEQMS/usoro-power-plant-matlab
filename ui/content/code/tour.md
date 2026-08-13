@@ -28,14 +28,20 @@ Inside `sim.run`, each derivative evaluation flows through the classes in
 a fixed order:
 
 ```matlab
-function [xdot, sig, u] = derivative(obj, t, x)
+function [xdot, sig, u] = derivative(obj, t, x, commitDt)
+    if nargin < 4, commitDt = 0; end          % plain f(t,x) by default
     s = model.StateVector.unpack(x);          % named states
     u = obj.control.actuatorCommands(s);      % demands -> valve areas, flows
     g = struct('nelec', obj.grid.frequency(t), 'velec', obj.grid.voltage(t));
     [xdot, sig] = obj.plant.evaluate(s, u, g); % physics: states 1-22, 47
-    xdot = xdot + obj.control.derivatives(s, u, sig, obj.profile.demand(t));
+    xdot = xdot + obj.control.derivatives(s, u, sig, ...
+        obj.profile.demand(t), commitDt);     % control: states 23-46
 end
 ```
+
+(`commitDt` is stepping bookkeeping — the [Simulator
+page](@code/simulator) explains it; pass nothing for a plain
+$f(t,x)$.)
 
 Two things are worth noticing already:
 

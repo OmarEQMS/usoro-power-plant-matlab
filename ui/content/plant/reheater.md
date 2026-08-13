@@ -25,7 +25,7 @@ all.
 
 One long tube bank (states 13/14: `rrho`, `hrho`) between the secondary
 superheater and the economizer in the gas path, absorbing `qrh` ≈
-172,000 Btu/s at full load through 944,000 lbm of metal — the heaviest
+193,000 Btu/s at full load through 944,000 lbm of metal — the heaviest
 bank in the boiler. Flow in is HP exhaust plus an optional spray
 (`wrh1 = whpo + wry`); flow out passes the **intercept valve** (`wiv`,
 normally wide open — it exists for overspeed protection) into the IP
@@ -73,7 +73,7 @@ push heat *toward* the reheater — without overfiring the whole boiler.
 |---|---|
 | Flow | ≈1004 lbm/s (HP exhaust) |
 | In / out conditions | ≈555 psia, 1317 Btu/lbm → 1000 °F, 1519 Btu/lbm |
-| Absorption `qrh` | ≈172,000 Btu/s |
+| Absorption `qrh` | ≈193,000 Btu/s |
 | Fill volume / metal mass | 6000 ft³ / 944,000 lbm |
 | Set point | 1000 °F, clamped; scheduled below ≈52% flow |
 | Spray `wry` range | 0–50 lbm/s (normally 0) |

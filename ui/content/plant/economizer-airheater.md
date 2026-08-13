@@ -27,7 +27,7 @@ from the HP heaters at 478 Btu/lbm and delivering it to the drum at
 ≈635 — still ≈50 Btu/lbm short of boiling, a deliberate **approach
 margin** so the economizer never generates steam inside its own tubes
 (steaming economizers pound and corrode). Its absorption `qec` ≈
-151,000 Btu/s at full load comes through 721,000 lbm of metal.
+165,000 Btu/s at full load comes through 721,000 lbm of metal.
 
 The name is literal Victorian bookkeeping: the device *economizes* —
 heat recovered here is fuel not burned. And note the elegant
@@ -77,7 +77,7 @@ that audit continues.
 ::: metrics The cold end at 100% load
 | Quantity | Value |
 |---|---|
-| Economizer absorption `qec` | ≈151,000 Btu/s |
+| Economizer absorption `qec` | ≈165,000 Btu/s |
 | Feedwater through it | 478 → ≈635 Btu/lbm (≈50 short of boiling) |
 | Gas to the air heater `tecgo` | ≈1105 °R |
 | Air preheat (fixed) | 598 → 948 °R |

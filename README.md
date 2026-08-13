@@ -68,10 +68,18 @@ Documentation index:
 - `docs/thesis_notes.md` — standalone thesis summary (plant description,
   modeling assumptions, control system, the seven emergency tests,
   verification tables, FORTRAN-listing landmarks).
-- `docs/next_steps.md` — open investigations (the uniform fuel/air offset
-  chief among them) and planned improvements.
-- `docs/ui.md` — plan for the documentation/learning website (source under
-  `ui/` once built).
+- `docs/next_steps.md` — open investigations (the Test 4 air-margin limit
+  cycle chief among them) and planned improvements.
+- `docs/ui.md` — plan for the documentation/learning website; source lives
+  under `ui/`, built site under `dist/`.
+
+**Website content policy:** the site's pages (`ui/content/`) describe the
+*current* model only — no "previously the model did X" framing. All
+correction history (transcription fixes, their symptoms and root causes,
+remaining residuals) lives on the site's dedicated changelog page,
+`ui/content/plant/changelog.md`; new fixes get an entry there, not a
+historical aside on a component page. The repository docs above are the
+engineering audit trail and do keep their history.
 
 ## Verification
 
@@ -83,4 +91,5 @@ Documentation index:
 - Steady-state values at 100% / 77.5% / 50% load are tabulated against
   manufacturer data in thesis Tables V.1–V.3 (agreement within 5%).
 - Per-test quantitative comparisons against Figures V.1–V.11 are in
-  `docs/model.md`, including the known capability offsets on Tests 4 and 6.
+  `docs/model.md`, including the documented air-margin residual on
+  Tests 4 and 6.

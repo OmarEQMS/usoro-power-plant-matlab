@@ -51,7 +51,13 @@ commands, grid sample, plant, plus control derivatives. The
 their contents.
 
 **`step(t, x)`** — one [RK4](@basics/numerical-integration) step of
-`Ts = 0.1` s: four derivative calls, the classic blend. One
+`Ts = 0.1` s: four derivative calls, the classic blend, then two
+pieces of thesis stepping semantics. After the blend, the control
+states are saturated in place (`ControlSystem.clampStates`) — the
+FORTRAN's by-reference limiter calls, i.e. the integrators'
+[anti-windup](@basics/control-basics). And the first (committed)
+derivative call advances the
+[rate-feedforward](@plant/loops-steam) backward differences. One
 convenience with consequences: it returns the `sig` and `u` evaluated
 at the *incoming* point, so callers (the dashboard, the logger) get
 the pre-step signals without paying a fifth evaluation.
