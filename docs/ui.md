@@ -165,6 +165,9 @@ small runtime bundle handles sidebar collapse, theme and scrollspy.
 Client-side search (revisit with lunr.js if wanted); in-browser
 simulation (a TS/WASM port is a separate project); per-component SVG
 diagrams (pages are prose-first; the clickable plant schematic on
-`plant/overview` is the only diagram); mobile/print polish and favicon.
+`plant/overview` is the only diagram); print styles and favicon. Mobile
+navigation is handled: below `lg` the navbar collapse carries the
+current section's full page map plus other-section jump links (the
+sidebar is `d-none` there), capped at 75vh with its own scrollbar.
 Deployment: `dist/` works from any static file server; hosting choice
 deferred.

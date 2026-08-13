@@ -6,6 +6,42 @@
   background-color: #1d3557;
 }
 
+// Mobile toggler menu: the sidebar is hidden below lg, so the collapse
+// carries the current section's page map — keep it scrollable, not
+// page-length.
+@include media-breakpoint-down(lg) {
+  .site-navbar .navbar-collapse {
+    max-height: min(75vh, 34rem);
+    overflow-y: auto;
+  }
+}
+
+.mobile-nav {
+  padding: 0.5rem 0 0.75rem;
+
+  .mobile-nav-heading {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  .mobile-nav-divider {
+    border-color: rgba(255, 255, 255, 0.25);
+    margin: 0.75rem 0 0.25rem;
+  }
+
+  .nav-link {
+    padding: 0.3rem 0.5rem;
+
+    &.active {
+      font-weight: 600;
+    }
+  }
+}
+
 .site-layout {
   padding-top: 1.5rem;
   min-height: calc(100vh - 10rem);
