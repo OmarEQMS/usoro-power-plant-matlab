@@ -177,11 +177,11 @@ firing.
 ::: caution
 The model reproduces the thesis' transient behavior quantitatively, and
 its trimmed operating points sit on the thesis' published steady-state
-tables. One documented residual: the printed deck's air path has zero
-margin at rated load, so the two maximum-capability tests (4 and 6)
-hunt or settle slightly under their figures. Pages in this section
-quote design values as published; the corrections it took to get here
-are recorded in the [model changelog](@plant/changelog).
+tables; the rated point holds steady under constant full-load demand.
+One documented residual: the fan-loss test (7) recovers ≈25–30 MW above
+its figure. Pages in this section quote design values as published; the
+corrections it took to get here are recorded in the
+[model changelog](@plant/changelog).
 :::
 
 The remaining pages of this section are being written; their scope is

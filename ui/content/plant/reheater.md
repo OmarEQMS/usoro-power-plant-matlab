@@ -80,12 +80,15 @@ push heat *toward* the reheater — without overfiring the whole boiler.
 :::
 
 ::: caution
-This model needs more gas recirculation than the thesis reports at the
-same part-load points (≈360 vs 337 lbm/s at 77.5%) — a consequence of
-its documented ≈10% fuel/air offset, not of the control logic, which
-matches the thesis deck constant for constant. The *mechanisms* on this
-page reproduce the thesis faithfully; the exact recirc level is honest
-to this model's heat balance.
+This model runs more gas recirculation than the thesis reports at the
+same part-load points (≈360 vs 337 lbm/s at 77.5%). The recirc level
+is only loosely pinned by the plant: its integrator acts *only* while
+the burner tilt sits outside the ±5° deadband, so the steady value is
+path-dependent within a band (≈355–385 lbm/s at 77.5%) — and the
+thesis' 337 lies outside this model's band (re-seeded there, the plant
+pumps it back to ≈356). The control logic itself matches the thesis
+deck constant for constant; the exact recirc level is honest to this
+model's heat balance.
 :::
 
 ::: code-map Where this page lives in the code

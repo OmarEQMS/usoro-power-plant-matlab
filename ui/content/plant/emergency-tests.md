@@ -29,7 +29,7 @@ pressure dips, combustion repays.
 | 1 | 100% → 77.5% | power tracking, pressure recovery to 2415, drum [swell](@plant/waterwalls-drum) | quantitative (Fig. V.1) |
 | 2 | 77.5% → 50% | same, deeper; [temperature schedules](@basics/control-practices) come off their clamps | quantitative (Fig. V.3) |
 | 3 | 50% → 77.5% | load *increase* — harder: deeper pressure dip, slow convergence | quantitative (Fig. V.5) |
-| 4 | 77.5% → 100% | the capability ceiling: governor and air rail at 5 V | reaches rated (603 MW / 2433 psia at 700 s, Fig. V.7 ≈600 / 2415), then cycles ±20 MW around it (the air-margin residual) |
+| 4 | 77.5% → 100% | the capability ceiling: governor saturates, air control near its rail | quantitative — climbs to rated and locks on (600.5 MW / 2415.0 psia at 700 s, main steam ≈1109 lb/s; Fig. V.7 ≈600 / 2415 / ≈1110) |
 
 ## The electrical emergencies (Tests 5–6)
 
@@ -40,13 +40,13 @@ The grid reaching into the plant through the
 | Test | Scenario | Watch | Match |
 |---|---|---|---|
 | 5 | 30% line-voltage step drop | motor torque ∝ V²: [fans and pumps](@basics/rotating-machinery) sag and re-settle; steam side barely moves | quantitative (Fig. V.9) |
-| 6 | frequency 60 → 56 Hz in 5 s | turbine dragged to 352 rad/s; [droop](@plant/loops-turbine) rails the governor; fans slow → [cross-limit](@plant/loops-combustion) caps fuel | fast transient quantitative (spike 563 vs ≈563 MW); settles ≈515 MW vs thesis 537 (air-margin residual) |
+| 6 | frequency 60 → 56 Hz in 5 s | turbine dragged to 352 rad/s; [droop](@plant/loops-turbine) rails the governor; fans slow → [cross-limit](@plant/loops-combustion) caps fuel | quantitative (spike 563.7 vs ≈563 MW; settles 535.5 MW / 2115 psia vs thesis ≈537 / 2125) |
 
 ## The equipment loss (Test 7)
 
 | Test | Scenario | Watch | Match |
 |---|---|---|---|
-| 7 | one FD+ID [fan pair lost](@plant/air-gas-path) at 100% | power dive and air-limited recovery; drum level's double deception; no run-back logic | close, slightly *above* the figure (dip 398 vs ≈371 MW, recovery 440 vs ≈420) |
+| 7 | one FD+ID [fan pair lost](@plant/air-gas-path) at 100% | power dive and air-limited recovery; drum level's double deception; no run-back logic | tracks the figure's shape, *above* it (dip 410 vs ≈371 MW, recovery 448 vs ≈420) |
 
 Two configuration notes reproduced from the thesis: gas recirculation
 control is **deactivated** in Tests 6 and 7 (the thesis reports the
@@ -68,17 +68,16 @@ Tests 2–7 start from trimmed operating points — run
 ::: caution
 The honest ledger, in one place. The trimmed operating points sit on
 the thesis' published tables (77.5%: fuel 63.6 vs 63.3 lb/s, air 977
-vs 972). Tests 1, 2, 3 and 5 reproduce the figures quantitatively and
-Test 7 recovers slightly above its figure. The one residual is **air
-margin** in the two maximum-capability tests: the 100% point needs
-≈1230 lb/s of air but the printed deck's fans and dampers deliver at
-most ≈1219 fully open — thesis Table V.1 claims 1230.3 at only
-≈4.55 V, so the published run had a few percent more air than the
-printed listing provides. With zero margin, Test 4 cycles slowly
-around rated power instead of locking on, and Test 6 settles ≈4%
-below its figure. A thesis-internal inconsistency, not a hidden
-defect — the [model changelog](@plant/changelog) has the full
-residuals list and the corrections that came before it.
+vs 972), and the 100% point holds indefinitely under constant
+full-load demand (600.0 MW / 2415.0 psia). Tests 1–6 reproduce the
+figures quantitatively; Tests 4 and 6 do so through the fan-curve
+calibration `kfcal` (the fan ΔP coefficients carry ×1.10 so the air
+path can deliver the 1230 lb/s the rated point needs — pinned by the
+published steady states, see the
+[air-gas path](@plant/air-gas-path)). The one residual is **Test 7**:
+the fan-loss recovery lands ≈25–30 MW above Figure V.11. The
+[model changelog](@plant/changelog) has the full residuals list and
+the corrections behind today's numbers.
 :::
 
 ::: code-map Where this page lives in the code

@@ -68,11 +68,14 @@ step without thought.
 ::: caution
 The closed forms are *manual* derivations from the thesis — the hardest
 code in the model to audit, because a slip in the algebra produces
-plausible flows that are simply wrong. The `airGas` network is the
-open investigation's prime suspect for exactly this reason: at the
-thesis' own 100% state it delivers ≈4% less air than the thesis'
-published value. Treat these functions as verified-in-use, not
-verified-line-by-line — yet.
+plausible flows that are simply wrong. They have earned their trust
+three ways: `airGas` was verified coefficient-by-coefficient against
+the printed ARFLOW listing, `feedwater` closes the feed pump torque
+balance to four digits, and the pump/fan networks reproduce Test 5's
+coast-down time constants. One deliberate departure: the fan ΔP
+coefficients in `airGas` carry the documented `kfcal = 1.10`
+[calibration](@plant/air-gas-path) — the printed values cannot supply
+the air the thesis' own published steady states report.
 :::
 
 ::: code-map Where this page lives in the code

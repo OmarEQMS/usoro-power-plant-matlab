@@ -15,12 +15,15 @@ model's correctness claims.
   component functions. **Do not edit** — `validate_against_legacy.m`
   and the kjtre contract depend on these staying as-is (in particular,
   `const1.m` must keep `kjtre=625000` as listed in the thesis deck).
-  Two sanctioned exceptions, both transcription-slip corrections applied
-  identically on both sides so the equivalence stays meaningful:
+  Three sanctioned exceptions, applied identically on both sides so
+  the equivalence stays meaningful: two transcription-slip corrections —
   `crstat.m` (isentropic anchoring, `ho=h1-...`, Aug 2026) and
   `hxfer.m` (`sg=z1+z2*(tg1+tgo)`, the printed listing's `+`, Aug 2026 —
   the `-` slip under-counted convective heat delivery ~10% at every
-  load; see docs/model.md).
+  load) — and one documented calibration, `arflow.m` (`kfcal=1.10` on
+  the fan ΔP coefficients, Aug 2026 — the printed fans cannot supply
+  the air the thesis's published steady states report; see
+  docs/model.md, "Known quantitative offsets").
 - **`model_old.md`** — the legacy code's documentation: state-vector
   table, module ↔ thesis correspondence, the frozen-speed history
   (why `pba1` hardcoded `nfp`/`ntr` to zero and how RK4 fixed it), and

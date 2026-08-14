@@ -264,37 +264,35 @@ All at the thesis 15%/min rate, starting from the trimmed operating points:
 
 - **Test 2** (`test.run2`, 77.5% → 50%): matches Figure V.3 closely —
   power settles 299.9 MW with a 294 MW undershoot (thesis ≈298/295),
-  throttle peaks 2441 → returns 2416 psia (thesis 2437 → 2415), main steam
+  throttle peaks 2437 → returns 2416 psia (thesis 2437 → 2415), main steam
   flow ends 529 lb/s (thesis ≈530).
-- **Test 3** (`test.run3`, 50% → 77.5%): power overshoots to 477.2 MW
-  (thesis ≈472) and settles 464.9; the throttle-pressure dip now matches
-  the thesis (2339 vs ≈2354 psia) and pressure returns to 2415 within the
+- **Test 3** (`test.run3`, 50% → 77.5%): power overshoots to 471.8 MW
+  (thesis ≈472) and settles 464.9; the throttle-pressure dip is 2349 vs
+  the thesis's ≈2354 psia and pressure returns to 2415 within the
   700 s window.
 - **Test 4** (`test.run4`, 77.5% → 100%): the thesis calls this run only
   "fairly well behaved" (signals saturate, power lags demand, no
-  overshoot). This model reproduces the climb quantitatively — at the
-  thesis's 700 s horizon it reads 603 MW at 2433 psia with main steam
-  flow ≈1110 lb/s (thesis Fig. V.7: 600 MW, 2415 psia, ≈1110 lb/s; the
-  100% steady state *is* a ≈1110 lb/s point per Table V.1) — but run
-  longer it cycles slowly around the rated point (≈565–605 MW, 2240–2440
-  psia, ~400 s period) instead of locking on. The 100% point needs
-  ≈101% of the air the printed deck can deliver at the 5 V damper rail,
-  so the air cross-limit keeps engaging — see "Known quantitative
-  offsets" below.
+  overshoot). This model reproduces the climb quantitatively and locks
+  onto the rated point — at the thesis's 700 s horizon it reads
+  600.5 MW at 2415.0 psia with main steam flow ≈1109 lb/s (thesis
+  Fig. V.7: 600 MW, 2415 psia, ≈1110 lb/s), and run to 1400 s it stays
+  at 600.3 MW ± 0.1 with the air control at ≈4.67 V. The settle depends
+  on the fan-curve calibration — see "Known quantitative offsets" below.
 
 ## Fan-loss test (thesis Test 7)
 
 `test.run7`: at 100% load, one of the two FD+ID fan pairs is lost at
 t = 10 s (no Unit Run-Back; gas recirculation off as in the thesis run).
 The fan count is a configuration constant (`knfd`/`knid`), so the script
-stitches two phases at t = 10 s. Results track Figure V.11, recovering
-slightly *higher* than the figure since the HXFER fix:
+stitches two phases at t = 10 s. Results track Figure V.11's shape,
+recovering *higher* than the figure — the one remaining quantitative
+residual (see "Known quantitative offsets"):
 
 | Variable | This model | Thesis Fig. V.11 |
 |---|---|---|
-| Power dip / recovery | 398.3 → 440.4 MW | ≈371 → ≈420 |
-| Throttle pressure min / end | 1643 / 1766 psia | ≈1560 / ≈1700 |
-| Main steam flow min / end | 735 / 798 lb/s | ≈690 / ≈770 |
+| Power dip / recovery | 409.6 → 448.2 MW | ≈371 → ≈420 |
+| Throttle pressure min / end | 1682 / 1796 psia | ≈1560 / ≈1700 |
+| Main steam flow min / end | 753 / 811 lb/s | ≈690 / ≈770 |
 | Air control / governor | rail at 5 V | rail at 5 V |
 | Turbine speed | flat 377 | flat 377 |
 
@@ -318,21 +316,34 @@ The re-trimmed operating points now sit on the thesis's published steady
 states: at 77.5%, fuel 63.62 lb/s vs Table V.2's 63.3, air 976.6 vs 972.1,
 main steam flow 811.4 vs 813.4, drum pressure 2602.1 vs 2603.5.
 
-The one *remaining* documented inconsistency is on the air side, and it is
-between the thesis's published tables and its own printed listing: thesis
-Table V.1 reports 1230.3 lb/s of air at the 100% steady state with the air
-control at only ≈4.55 V (Fig. V.7), but the printed ARFLOW/deck (verified
-transcription-clean against the scan, constants included) delivers at most
-≈1219 lb/s with both dampers *full open* at the IC fan speeds — reaching
-1230.3 would take damper area ≈1.02. Since the 100% point needs
-air ≈ 15.35 × 80.1 ≈ 1230 lb/s, this model runs that point with zero air
-margin: Test 4 arrives at rated power but cycles around it (the air
-cross-limit caps fuel ≈1% short on average, the boiler integrates the
-deficit, and the tilt/spray/recirc loops swing along), and the
-frequency-depressed Tests 6/7 settle somewhat deeper than the thesis
-figures. Verified *not* the cause (Aug 2026 sessions): every control-deck
-constant against the scan, the reheat schedule, the gas-recirculation
-level, ARFLOW, FNXFER, and HXFER (post-fix).
+The air-side table-vs-listing inconsistency is **calibrated out**
+(Aug 2026): thesis Table V.1 reports 1230.3 lb/s of air at the 100% steady
+state with the air control at only ≈4.55 V (Fig. V.7), but the printed
+ARFLOW/deck (verified transcription-clean against the scan, constants
+included) delivers at most ≈1219 lb/s with both dampers *full open* at the
+IC fan speeds. Since the fuel/air cross-limit needs air ≥ (kwaru/kwflu) ×
+wfl = 15.35 × 80.14 ≈ 1230.0 lb/s to sustain 100% fuel, the printed deck
+ran the rated point with zero air margin: the cross-limit capped fuel ≈1%
+short, and the plant limit-cycled around 100% (574–606 MW, ~400 s period)
+instead of holding it. The published runs evidently used stronger fans
+than the printed listing, so `Hydraulics.airGas` (mirrored in
+`deprecated/old/arflow.m`) applies `kfcal = 1.10` to the six fan ΔP
+coefficients — fans of the same speed and vane law developing 10% more
+head (≈ +5% deliverable air, full-open ceiling ≈1267 lb/s; fan power
+terms k4–k6 stay as printed). The value is pinned by the published
+off-design data, not by the 100% point alone: ×1.10 lands Test 6's
+frequency-depressed settle on Figure V.10 (535.5 MW / 2115 psia vs
+≈537 / 2125; the stock deck gave 515 / 2035, and the ×1.2275 that would
+reproduce the 4.55 V damper reading exactly overshoots to 562 / 2225).
+A friction-side calibration (×0.822 on the duct constants) was rejected
+on the same evidence. With the calibration, the 100% point holds
+indefinitely (600.0 MW / 2415.0 psia, air control ≈4.66 V) and Test 4
+settles on Table V.1. The remaining residual: Test 7's fan-loss recovery
+sits ≈25–30 MW above Figure V.11 (and rises slightly with air capacity —
+its published trace is the one datum mildly *against* the calibration).
+Verified *not* the cause of the original deficit (Aug 2026 sessions):
+every control-deck constant against the scan, the reheat schedule, the
+gas-recirculation level, ARFLOW, FNXFER, and HXFER (post-fix).
 
 The gas-recirculation level itself is only loosely pinned by the plant:
 the recirc integrator acts only while the burner tilt is outside its ±5°
@@ -356,8 +367,8 @@ barely moves:
 |---|---|---|
 | Condensate pump speed | 186.7 → 184.2 rad/s in ~10 s | 186.7 → 184.2 |
 | Recirculation pump speed | 187.1 → 185.45 in ~10 s | 187 → 185.45 |
-| FD fan speed | 62.3 → 61.6, ~100 s | 62.3 → 61.7, ~100 s |
-| ID fan speed | 93.2 → 91.3, slow ~150 s | 93.25 → 91.9, ~150 s |
+| FD fan speed | 62.4 → 61.9, ~100 s | 62.3 → 61.7, ~100 s |
+| ID fan speed | 93.5 → 92.4, slow ~150 s | 93.25 → 91.9, ~150 s |
 | Power / throttle pressure | flat 465 MW / 2415 psia | flat |
 | Feed pump speed | flat (steam-driven) | flat |
 
@@ -367,13 +378,13 @@ barely moves:
 t = 10 s; gas recirculation control deactivated as in the thesis run.
 Turbine speed drops with the grid to 351.9 rad/s exactly as in Figure V.10;
 governor and air-flow controls rail at 5 V (as in the thesis); the fast
-transient matches quantitatively (power spike 563.3 MW vs ≈563;
-steam-flow peak 1043.8 lb/s vs ≈1040). The sustained depression is
-somewhat deeper than the thesis (settles ≈515 MW at ≈2035 psia vs 537 MW
-at 2125 psia; before the HXFER fix it was 470/1857): with the grid
-frequency down 4 Hz the fans are speed-limited, and this deck has no air
-margin at high load (see "Known quantitative offsets"), so firing caps a
-little lower. The control integrator states stay bounded: `Simulator`
+transient matches quantitatively (power spike 563.7 MW vs ≈563;
+steam-flow peak 1043.9 lb/s vs ≈1040). The sustained depression lands on
+the figure: with the grid frequency down 4 Hz the fans are speed-limited,
+so deliverable air sets the settle level, and the calibrated fan curves
+("Known quantitative offsets") put it at 535.5 MW / 2115 psia vs the
+thesis's ≈537 / 2125 — this test is the off-design datum that pins the
+calibration. The control integrator states stay bounded: `Simulator`
 applies the listing's by-reference limiter write-back
 (`ControlSystem.clampStates`) after every step.
 
@@ -417,9 +428,11 @@ directly through the pump/fan slow-down time constants.
   different near-equilibria; the tables/figures side is what the tests
   reproduce.
 - **The seven emergency tests** reproduce thesis Figures V.1–V.11 as
-  documented per-test above: Tests 1, 2, 3, 5 quantitatively; Test 7
-  slightly above the figure; Tests 4 and 6 with the documented air-margin
-  residual ("Known quantitative offsets").
+  documented per-test above: Tests 1–6 quantitatively (Tests 4 and 6
+  via the documented fan-curve calibration, "Known quantitative
+  offsets"); Test 7 above the figure by ≈25–30 MW — the remaining
+  residual. The 100% point itself holds indefinitely (600.0 MW /
+  2415.0 psia under constant full-load demand).
 - **Runtime:** a full 700 s Test 1 runs in ≈18 s
   (`Simulator.run`, RK4 at 0.1 s, R2026a).
 

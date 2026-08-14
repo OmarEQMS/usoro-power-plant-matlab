@@ -2,15 +2,24 @@ function [war,wwwg,wfd,wgo,wid,pahao,pfdo,pfn,pecgo,papgo,pido,efd,eid]=...
     arflow(knfd,knid,nfd,nid,wgr,wfl,avf,avi)
 % compute air flow
 kpat=14.7;
-k1fd=-7.41568e-7;
-k2fd=8.67456e-6;
-k3fd=1.67206e-4;
+% Fan-curve calibration (mirror of model.Hydraulics.airGas, kept
+% identical so validate_against_legacy stays bit-for-bit): x1.10 on the
+% fan dP coefficients k1-k3. The printed deck's fans deliver at most
+% ~1219 lb/s of air at IC fan speeds with dampers full open, but the
+% fuel/air cross-limit needs 1230.0 lb/s to sustain 100% fuel, and the
+% thesis's own Table V.1/Fig. V.7 show 1230.3 lb/s at only ~4.55 V of
+% air control - the published runs used stronger fans than the printed
+% listing. Power terms k4-k6 stay as printed.
+kfcal=1.10;
+k1fd=-7.41568e-7*kfcal;
+k2fd=8.67456e-6*kfcal;
+k3fd=1.67206e-4*kfcal;
 k4fd=-2.18247e-6;
 k5fd=5.13044e-5;
 k6fd=-6.96849e-5;
-k1id=-1.38148e-6;
-k2id=1.12227e-5;
-k3id=1.09727e-4;
+k1id=-1.38148e-6*kfcal;
+k2id=1.12227e-5*kfcal;
+k3id=1.09727e-4*kfcal;
 k4id=-1.12212e-6;
 k5id=1.74023e-5;
 k6id=3.43528e-5;

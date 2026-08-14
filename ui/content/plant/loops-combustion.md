@@ -80,7 +80,7 @@ Put it together for Test 6 (frequency drop): fans slow → `war` falls →
 fuel cross-limit clamps `cfld` → steam production falls → `psso` sags →
 master demand climbs → air demand rails at 5 V (it is already asking
 for more than the fans can give) → `c3md` saturates at its rail → the
-plant settles where *air* says it settles, ≈515 MW. Five loops, one
+plant settles where *air* says it settles, ≈535 MW. Five loops, one
 bottleneck, no drama — which is the design's whole point.
 
 ::: code-map Where this page lives in the code

@@ -13,10 +13,11 @@ economizer — in [flue-gas order](@basics/heat-transfer).
 
 ::: why
 Five heat rates (`qwwgm`, `qps`, `qss`, `qrh`, `qec`) drive every
-boiler-side energy state, and all five are computed here. This file is
-also — together with `Hydraulics.airGas` — the open fuel/air-offset
-investigation's territory: a slip in one absorption equation would
-explain the model's uniform extra firing.
+boiler-side energy state, and all five are computed here. Small errors
+in these equations do not stay small: the absorbed fraction of fuel
+heat (≈88% at rated) feeds straight into how much firing every
+operating point needs, which is why this file's one-character history
+made the [changelog](@plant/changelog).
 :::
 
 ## The furnace

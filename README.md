@@ -24,8 +24,10 @@ RK4 at Ts = 0.1 s — the same scheme the thesis used (DYSYS routine, p. 49).
   2604 psia).
 - **Transcription verified against the printed FORTRAN scan** — including
   three corrected slips (CRSTAT anchoring, `kjtre` units, HXFER mean
-  specific heat) and a bit-for-bit equivalence harness against the
-  archived first port (`deprecated/tools/validate_against_legacy.m`).
+  specific heat), one documented calibration (fan ΔP coefficients ×1.10,
+  pinned by the thesis's published steady states), and a bit-for-bit
+  equivalence harness against the archived first port
+  (`deprecated/tools/validate_against_legacy.m`).
 - **Interactive dashboard** (`src/run_ui.m`) and a **45-page
   documentation/learning website** (`ui/`, `npm run build`).
 - **Fast:** a 700 s emergency run takes ≈18 s headless.
@@ -85,8 +87,8 @@ Documentation index:
 - `docs/thesis_notes.md` — standalone thesis summary (plant description,
   modeling assumptions, control system, the seven emergency tests,
   verification tables, FORTRAN-listing landmarks).
-- `docs/next_steps.md` — open investigations (the Test 4 air-margin limit
-  cycle chief among them) and planned improvements.
+- `docs/next_steps.md` — open investigations and planned improvements
+  (coordinated control mode chief among them).
 - `docs/ui.md` — the documentation/learning website: pipeline
   architecture, how to build and add pages, authoring conventions,
   verification checklist, and gotchas. Source under `ui/`, built site
@@ -110,5 +112,5 @@ engineering audit trail and do keep their history.
 - Steady-state values at 100% / 77.5% / 50% load are tabulated against
   manufacturer data in thesis Tables V.1–V.3 (agreement within 5%).
 - Per-test quantitative comparisons against Figures V.1–V.11 are in
-  `docs/model.md`, including the documented air-margin residual on
-  Tests 4 and 6.
+  `docs/model.md`, including the one documented residual (Test 7's
+  fan-loss recovery lands ≈25–30 MW above its figure).

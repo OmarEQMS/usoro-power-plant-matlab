@@ -74,8 +74,8 @@ Note the first two arguments: `knfd`, `knid` — the **number of operating
 fan pairs**. They are configuration constants, not states, which is why
 Test 7 (losing one FD+ID pair at full load) is simulated as two phases
 stitched at the failure instant: same model, `2 → 1`, and the surviving
-pair suddenly faces the whole system curve. Power dips to ≈398 MW and
-claws back to ≈440 — air-limited, exactly as this page predicts.
+pair suddenly faces the whole system curve. Power dips to ≈410 MW and
+claws back to ≈448 — air-limited, exactly as this page predicts.
 
 ## The fans in the emergencies
 
@@ -85,28 +85,31 @@ claws back to ≈440 — air-limited, exactly as this page predicts.
 - **Test 6 (frequency drop):** synchronous speed itself falls 6.7%; fan
   [affinity](@basics/pumps-fans) turns that into ≈13% less head. Air
   demand rails at 5 V, the cross-limit caps fuel, and the plant settles
-  at ≈515 MW — the fans, not the boiler, set that number.
+  at ≈535 MW — the fans, not the boiler, set that number.
 - **Test 7 (pair loss):** the brute-force version of the same lesson.
 
 ::: metrics The path at 100% load
 | Quantity | Value |
 |---|---|
-| Air `war` / fuel `wfl` / recirc `wgr` | ≈1220 / 80 / ≈184 lbm/s |
+| Air `war` / fuel `wfl` / recirc `wgr` | ≈1230 / 80 / ≈184 lbm/s |
 | Furnace gas `wwwg` | ≈1490 lbm/s |
 | Furnace pressure `pfn` | 14.7 psia (set point) |
 | FD / ID fan speeds | 61.9 / 92.5 rad/s |
 | Operating pairs `knfd`/`knid` | 2 / 2 |
 :::
 
-::: note The zero-margin ceiling
-The 100% point needs air ≈ 15.35 × 80.1 ≈ 1230 lbm/s, but this network
-delivers at most ≈1219 with both vane sets *fully open* at nominal fan
-speeds — the rated point sits exactly on the path's capacity. (Thesis
-Table V.1 reports 1230.3 lbm/s at only ≈4.55 V of vane command, more
-than the printed ARFLOW deck can produce at all — the published run
-evidently had a few percent more air than the printed listing.) That
-zero margin is why Test 4 cycles slowly around rated power and Test 6
-settles a few percent under its figure.
+::: note The calibrated fan curves
+The 100% point needs air ≈ 15.35 × 80.1 ≈ 1230 lbm/s through the
+[cross-limit](@plant/loops-combustion), and the fan ΔP coefficients in
+`airGas` carry a ×1.10 calibration (`kfcal`) so the network can supply
+it: fans of the printed speed and vane law developing 10% more head,
+≈5% more deliverable air, a full-open ceiling of ≈1267 lbm/s — about 3%
+of margin above rated, which is what lets the unit hold 100% with the
+vanes at ≈91% and lets Test 6's speed-limited fans land on their
+figure. The calibration is pinned by the thesis's published steady
+states (Table V.1's 1230.3 lbm/s of air at ≈4.55 V of vane command);
+the story of how it was found is on the
+[changelog](@plant/changelog).
 :::
 
 ::: code-map Where this page lives in the code

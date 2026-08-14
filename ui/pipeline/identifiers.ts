@@ -136,6 +136,7 @@ export const identifiers: Record<string, string> = {
   adv: 'area: Deaerator (condensate) Valve (0–1, from cdwd)',
   xgg: 'signal: burner tilt angle (rad, ±0.5236 = ±30°)',
   // key constants met in prose
+  kfcal: 'constant: Fan-curve CALibration (×1.10 on the fan ΔP coefficients in airGas; pinned by the thesis-published steady states)',
   khfl: 'constant: fuel Heating value (18,200 Btu/lbm)',
   kafr: 'constant: Air/Fuel Ratio demand (13.65 lbm air per lbm fuel)',
   ktrh: 'scheduled set point: ReHeat outlet temperature (°R, from whp)',

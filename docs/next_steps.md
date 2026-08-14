@@ -10,26 +10,7 @@ recorded in `model.md` ("Known quantitative offsets") and on the site's
 changelog page (`ui/content/plant/changelog.md`); this file lists only
 what is still open.
 
-## 1. Test 4 limit cycle at the air ceiling
-
-Test 4 reaches rated power (peaks ≈603–607 MW, pressure recovering to
-≈2435 psia each swing) but orbits the 100% point (≈565–605 MW, 2240–2440
-psia, ~400 s period) instead of settling like Figure V.7. Root cause of
-the residual: the 100% point needs air ≈ 15.35 × 80.1 ≈ 1230 lb/s, but
-the printed deck's air network delivers at most ≈1219 lb/s with both
-dampers full open at the IC fan speeds (`air_probe`: reaching 1230.3
-would need damper area ≈1.02). Thesis Table V.1 reports 1230.3 lb/s *at*
-its 100% steady state with the air control at only ≈4.55 V (Fig. V.7) —
-i.e. the thesis's published run had a few percent more air delivery at a
-given damper signal than its own printed listing provides. With zero air
-margin, the cross-limit caps fuel ≈1% short on average, the boiler
-integrates the deficit, and the tilt/spray/recirc loops swing along
-(tilt ±15°+, spray 3–64 lb/s over a cycle). Options if a settle is ever
-wanted: treat the air-side capacity constants as the remaining
-table-vs-listing inconsistency (unfalsifiable from the scan alone), or
-accept the cycle as this deck's faithful behavior.
-
-## 2. Coordinated Control Mode
+## 1. Coordinated Control Mode
 
 The thesis modeled it but ran all published tests boiler-following: the
 code carries the scheduled throttle set point `kpsso = k1pss + k2pss·ldc`
@@ -39,8 +20,15 @@ and then overrides it with the constant `k4pss = 2415` (see
 coordinated-mode experiments — sliding-pressure-style operation the thesis
 mentions but never plots.
 
-## 3. Smaller items
+## 2. Smaller items
 
+- **Test 7 settles high:** the fan-loss recovery sits ≈25–30 MW above
+  Figure V.11 (448 vs ≈420 MW, 1796 vs ≈1700 psia) — the one test the
+  fan-curve calibration moves slightly *away* from the thesis (its
+  single surviving fan pair benefits from the stronger fan curves).
+  Candidate explanations if anyone digs: the thesis run may have used
+  the printed (weaker) fans, or its single-fan network differs in a way
+  the scan doesn't show. All other tests land on the figures.
 - **40% voltage-drop variant of Test 5:** thesis text (p. 55) says the
   condensate pumps then fail to meet demand and the deaerator level falls
   toward a trip — one line with `model.GridProfile` to reproduce.
@@ -54,7 +42,7 @@ mentions but never plots.
   if integration-step sensitivity ever comes up; RK4 at 0.1 s is what this
   project uses throughout.
 
-## 4. Larger optional builds
+## 3. Larger optional builds
 
 - **Standard Model (27th order, thesis Appendix B):** the reduced
   analog-computer model — would allow reproducing the thesis's V.2/V.4/V.6/

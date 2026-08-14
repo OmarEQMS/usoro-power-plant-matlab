@@ -124,9 +124,20 @@ classdef Hydraulics
             % Air-gas path: FD and ID fan curves, air heater, furnace and
             % gas-side friction, solved for FD fan flow.  (thesis ARFLOW)
             kpat = 14.7;
-            k1fd = -7.41568e-7; k2fd = 8.67456e-6; k3fd = 1.67206e-4;
+            % Fan-curve calibration kfcal: the printed listing's fans max
+            % out at ~1219 lb/s of air (dampers full open, IC fan speeds),
+            % but the 100% point needs 1230.0 lb/s through the fuel/air
+            % cross-limit, and Table V.1/Fig. V.7 report 1230.3 lb/s at
+            % only ~4.55 V of air control - the thesis's published runs
+            % had stronger fans than its printed deck. x1.10 on the fan
+            % dP coefficients (~+5% air capacity) restores the published
+            % behavior (100% holds, Test 4 settles on Table V.1, Test 6
+            % lands on Fig. V.10). Power terms k4-k6 stay as printed.
+            % See docs/model.md, "Known quantitative offsets".
+            kfcal = 1.10;
+            k1fd = -7.41568e-7*kfcal; k2fd = 8.67456e-6*kfcal; k3fd = 1.67206e-4*kfcal;
             k4fd = -2.18247e-6; k5fd = 5.13044e-5; k6fd = -6.96849e-5;
-            k1id = -1.38148e-6; k2id = 1.12227e-5; k3id = 1.09727e-4;
+            k1id = -1.38148e-6*kfcal; k2id = 1.12227e-5*kfcal; k3id = 1.09727e-4*kfcal;
             k4id = -1.12212e-6; k5id = 1.74023e-5; k6id = 3.43528e-5;
             kfah = 1.82764e-7; kfapa = 3.968e-7; kfg = 263.7944e-9;
             kfapg = 1.176409e-7; kfst = 2.109e-7;

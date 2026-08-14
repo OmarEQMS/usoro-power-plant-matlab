@@ -13,11 +13,11 @@ that wastes a fifth of its fuel and one that wastes a tenth.
 
 ::: why
 Boiler efficiency is decided here, at the cold end. Every degree of gas
-temperature entering the stack is fuel bought and thrown away — and
-where this model's gas leaves *hotter* than the thesis' published
-balance implies, the discrepancy lands directly on the documented
-fuel/air offset. Understanding the cold end is understanding where the
-open investigation lives.
+temperature entering the stack is fuel bought and thrown away: of the
+≈88% of fuel heat the boiler absorbs at rated load, the last two
+stages of recovery — economizer and air heater — are what keep the
+stack loss down to the remaining ≈12%. Understanding the cold end is
+understanding where the efficiency ledger closes.
 :::
 
 ## The economizer
@@ -67,11 +67,12 @@ keeps two states and one exchanger model out of the problem.
 ::: caution
 That simplification has an accounting consequence: since the air-side
 pickup is fixed while the gas-side delivery varies with load, the air
-heater does not close an energy balance — the stack loss the model
-implies is not exactly the fuel heat minus the absorptions. This is one
-of the threads in the open investigation of the model's ≈10% fuel/air
-offset against the thesis' steady states: the cold-end ledger is where
-that audit continues.
+heater does not close an exact energy balance — the stack loss the
+model implies is not precisely the fuel heat minus the absorptions.
+The model accepts this bookkeeping slack by design; it is one reason
+audits of the boiler's energy ledger work from the absorbed fractions
+(the [heat-transfer](@code/heat-transfer) side) rather than from a
+stack-loss residual.
 :::
 
 ::: metrics The cold end at 100% load

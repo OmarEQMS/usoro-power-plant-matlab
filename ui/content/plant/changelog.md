@@ -107,19 +107,45 @@ The big one — a single character.
   Their deck gains are ±0.01, so the effect is small — implemented
   for fidelity, not performance.
 
+## 7. Fan-curve calibration (the air ceiling)
+
+- **Symptom** — the plant could not *hold* 100%: under constant
+  full-load demand it limit-cycled 574–606 MW with a ~400 s period,
+  the air vanes railed at 5 V; Test 4 reached rated power but orbited
+  it, and Test 6 settled ≈4% under its figure.
+- **Found** — by static probing of the [air-gas
+  network](@plant/air-gas-path) at the 100% state: the printed deck
+  delivers at most ≈1219 lbm/s of air with both vane sets fully open,
+  while the [cross-limit](@plant/loops-combustion) needs 1230.0 lbm/s
+  to sustain rated fuel — and the initial-condition state itself says
+  its vane command (≈4.55 V) delivers 1230.3, which the printed
+  ARFLOW cannot produce at *any* command. The published runs used
+  stronger fans than the printed listing.
+- **Root cause** — a table-vs-listing inconsistency inside the thesis
+  itself: its published steady states (Tables V.1–V.2, Figs. V.7,
+  V.10) are unreachable with its own printed fan coefficients.
+- **Change** — `kfcal = 1.10` on the six fan ΔP coefficients in
+  `airGas` (mirrored in the archived port): same fan speeds and vane
+  law, 10% more head, ≈5% more deliverable air. The value is pinned
+  by the published *off-design* data — ×1.10 lands Test 6's
+  speed-limited settle on Figure V.10 (535.5 MW / 2115 psia vs
+  ≈537 / 2125), while the ×1.23 that would exactly reproduce the
+  4.55 V vane reading overshoots it, as does a friction-side
+  calibration. Result: the 100% point holds indefinitely
+  (600.0 MW / 2415.0 psia), Test 4 climbs and locks onto Table V.1's
+  state, Test 3's pressure dip and overshoot tighten onto Figure V.5.
+
 ## Known residuals
 
 What the current model does *not* resolve — all documented in the
 repository's engineering notes, all traced to the thesis' own
 materials rather than to the port:
 
-- **The air ceiling.** The 100% point needs ≈1230 lbm/s of air; the
-  printed deck's [fans and vanes](@plant/air-gas-path) deliver at
-  most ≈1219 fully open. Thesis Table V.1 claims 1230.3 at only
-  ≈4.55 V of vane command — more than its own printed listing can
-  produce — so the published run evidently had a few percent more
-  air. Consequence: Test 4 cycles ±20 MW around rated power instead
-  of locking on, and Test 6 settles ≈4% under its figure.
+- **Test 7 settles high.** The fan-loss recovery lands ≈25–30 MW
+  above Figure V.11 (448 vs ≈420 MW). It is the one test the
+  fan-curve calibration moves slightly *away* from the thesis — its
+  surviving fan pair also benefits from the stronger curves — and so
+  the one datum mildly against ×1.10.
 - **Two flavors of "100%".** Evaluated through the verified valve and
   turbine equations, the p. 288 initial state passes ≈853 lbm/s of
   main steam, while Table V.1 lists 1109.2 for the same nominal
@@ -139,6 +165,7 @@ materials rather than to the port:
 | HXFER sign | `sg = z1 + z2*(tg1 + tgo)` | `HeatTransfer.convective` |
 | anti-windup | `clampStates`, per-step | `model.ControlSystem`, `Simulator.step` |
 | rate feedforwards | `fc2dv` … `fcxgg`, `rateFeedforwardsEnabled` | `model.ControlSystem` |
+| fan-curve calibration | `kfcal = 1.10` on the fan ΔP coefficients | `Hydraulics.airGas` |
 | equivalence guard | `validate_against_legacy` | `deprecated/tools/` |
 :::
 

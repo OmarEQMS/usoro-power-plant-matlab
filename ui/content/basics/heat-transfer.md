@@ -97,10 +97,11 @@ sig.qwwmw = P.kuwwmw*(s.twwm - sig.tdrs)^3;
 ::: caution
 The heat-transfer coefficients (`kupsgm`, `kussms`, …) are design-point
 fits, held constant. Real coefficients drift with flow and temperature;
-the model accepts that error to stay algebraic. When investigating
-steady-state offsets between model and thesis, these constants — and the
-absorption split they set — are prime suspects, precisely because
-nothing regulates them.
+the model accepts that error to stay algebraic. Whenever a steady-state
+offset between model and reference data appears, these constants — and
+the absorption split they set — are the first place to look, precisely
+because nothing regulates them (the
+[changelog](@plant/changelog)'s HXFER story is the proof).
 :::
 
 ::: metrics The absorption ledger at 100% load (Btu/s)
