@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Usoro Power Plant — wrap cover</title>
+<style>
+/* Lulu full-wrap cover, A5 trim, 234-page spine.
+   Sheet (with bleed): 317.42mm x 216.41mm; bleed 3.17mm on all sides.
+   Panels (trim): back 148.08 | spine 14.91 | front 148.08, height 210.06.
+   Safety margin: 12.7mm from trim edge; barcode zone (back, bottom-right,
+   spine side): 92mm x 32mm — kept free of content. */
+
+@page {
+  size: 12.497in 8.52in; /* inches: Chromium converts these to pt exactly */
+  margin: 0;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #1d3557;
+}
+
+.sheet {
+  position: relative;
+  width: 12.497in;
+  height: 8.52in;
+  background: #1d3557;
+  color: #f4f6f9;
+  overflow: hidden;
+}
+
+.panel {
+  position: absolute;
+  top: 3.17mm;
+  height: 210.06mm;
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------- back */
+.back {
+  left: 3.17mm;
+  width: 148.08mm;
+  padding: 16mm 15mm 50mm; /* bottom padding clears the barcode zone */
+  display: flex;
+  flex-direction: column;
+}
+
+.back-kicker {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 8pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 249, 0.75);
+  margin-bottom: 9mm;
+}
+
+.back-quote {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 12.5pt;
+  line-height: 1.5;
+  margin: 0 0 7mm;
+  color: #f4f6f9;
+}
+
+.back-rule {
+  width: 22mm;
+  border: 0;
+  border-top: 0.5pt solid rgba(244, 246, 249, 0.55);
+  margin: 0 0 7mm;
+}
+
+.back-body {
+  font-family: Georgia, serif;
+  font-size: 9pt;
+  line-height: 1.55;
+  color: rgba(244, 246, 249, 0.88);
+}
+
+.back-body p {
+  margin: 0 0 4mm;
+}
+
+.back-parts {
+  list-style: none;
+  margin: 0 0 4mm;
+  padding: 0;
+}
+
+.back-parts li {
+  margin: 0 0 2.4mm;
+  padding-left: 7mm;
+}
+
+.back-parts .n {
+  display: inline-block;
+  width: 7mm;
+  margin-left: -7mm;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  color: rgba(244, 246, 249, 0.7);
+}
+
+.back-parts .t {
+  font-style: italic;
+}
+
+.back-footer {
+  margin-top: auto;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 249, 0.6);
+}
+
+/* ------------------------------------------------------------ spine */
+.spine {
+  left: 151.25mm;
+  width: 14.91mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14mm 0 12mm;
+}
+
+.spine-title {
+  writing-mode: vertical-rl;
+  font-family: Georgia, serif;
+  font-size: 10.5pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f4f6f9;
+  white-space: nowrap;
+}
+
+.spine-glyph {
+  margin-top: auto;
+  width: 7.5mm;
+  color: rgba(244, 246, 249, 0.85);
+}
+
+/* ------------------------------------------------------------ front */
+.front {
+  left: 166.16mm;
+  width: 148.08mm;
+  display: flex;
+}
+
+.front-frame {
+  flex: 1;
+  margin: 12mm;
+  border: 0.5pt solid rgba(244, 246, 249, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14mm 8mm 8mm;
+}
+
+.front-kicker {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 8pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 249, 0.75);
+  margin-bottom: 10mm;
+}
+
+.front-title {
+  font-family: Georgia, serif;
+  font-size: 30pt;
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0 0 6mm;
+}
+
+.front-subtitle {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 11.5pt;
+  line-height: 1.45;
+  color: rgba(244, 246, 249, 0.85);
+}
+
+.front-art {
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 74mm;
+  color: rgba(244, 246, 249, 0.9);
+}
+
+.front-footer {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 249, 0.6);
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="panel back">
+    <div class="back-kicker">Physics &middot; Plant &middot; Code</div>
+    <p class="back-quote">Open any model file and recognize every equation
+    in it &mdash; where it comes from, what it assumes, and why it is
+    written the way it is.</p>
+    <hr class="back-rule">
+    <div class="back-body">
+      <p>This book teaches one specific thing, thoroughly: the 47th-order
+      dynamic model of a 600&nbsp;MW drum boiler&ndash;turbine power plant
+      from P.&nbsp;B.&nbsp;Usoro's 1977 MIT thesis, and the MATLAB
+      implementation that accompanies it.</p>
+      <ul class="back-parts">
+        <li><span class="n">I</span><span class="t">Basic Knowledge</span>
+        &mdash; the mathematics and physics toolkit, from units and
+        balances to feedback control and numerical integration.</li>
+        <li><span class="n">II</span><span class="t">Power Plant</span>
+        &mdash; the unit component by component, furnace to
+        generator.</li>
+        <li><span class="n">III</span><span class="t">Code</span> &mdash;
+        the model source file by file, ending with three full
+        equation-to-code walkthroughs.</li>
+      </ul>
+      <p>Twenty-three states describe the physical plant; twenty-four
+      describe its analog control system. Later chapters rely only on
+      earlier ones, and cross-references carry page numbers, so the book
+      reads front to back but supports jumping in anywhere.</p>
+    </div>
+    <div class="back-footer">Compiled from the project documentation &middot; MMXXVI</div>
+  </div>
+
+  <div class="panel spine">
+    <div class="spine-title">The Usoro Power Plant</div>
+    <svg class="spine-glyph" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+      <circle cx="15" cy="15" r="12"/>
+      <path d="M7 15 q4 -6 8 0 q4 6 8 0" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="panel front">
+    <div class="front-frame">
+      <div class="front-kicker">A guided tour in three parts</div>
+      <h1 class="front-title">The Usoro<br>Power Plant</h1>
+      <div class="front-subtitle">Physics, plant and code of a 47-state<br>drum boiler&ndash;turbine model</div>
+      <div class="front-art">
+        <svg viewBox="0 0 240 150" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+          <rect x="20" y="18" width="52" height="22" rx="11"/>
+          <line x1="27" y1="31" x2="65" y2="31" stroke-width="0.5" stroke-dasharray="3 2.5" opacity="0.65"/>
+          <rect x="24" y="62" width="44" height="52" stroke-width="0.9"/>
+          <path d="M36 110 q4 -5 0 -10 q-4 -5 0 -10 M46 112 q5 -6 0 -12 q-5 -6 0 -12 M56 110 q4 -5 0 -10 q-4 -5 0 -10" stroke-width="0.7" opacity="0.8"/>
+          <line x1="32" y1="40" x2="32" y2="62" stroke-width="0.8"/>
+          <line x1="60" y1="40" x2="60" y2="62" stroke-width="0.8"/>
+          <path d="M72 29 H96 a4 4 0 0 1 8 0 a4 4 0 0 1 8 0 a4 4 0 0 1 8 0 H132 V50 H146" stroke-width="0.8"/>
+          <path d="M146 36 L184 24 L184 76 L146 64 Z"/>
+          <line x1="184" y1="50" x2="199" y2="50" stroke-width="0.8"/>
+          <circle cx="212" cy="50" r="13"/>
+          <path d="M204 50 q4 -6 8 0 q4 6 8 0" stroke-width="0.8"/>
+          <line x1="165" y1="76" x2="165" y2="88" stroke-width="0.8"/>
+          <rect x="142" y="88" width="46" height="26" stroke-width="0.9"/>
+          <path d="M147 101 L153 95 L159 107 L165 95 L171 107 L177 95 L183 101" stroke-width="0.6" opacity="0.8"/>
+          <path d="M165 114 V128 H105" stroke-width="0.8"/>
+          <circle cx="98" cy="128" r="7" stroke-width="0.8"/>
+          <path d="M101 124 L93 128 L101 132 Z" stroke-width="0.7"/>
+          <path d="M91 128 H14 V29 H20" stroke-width="0.8"/>
+        </svg>
+      </div>
+      <div class="front-footer">Compiled from the project documentation &middot; MMXXVI</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

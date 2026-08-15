@@ -8,6 +8,7 @@
     "build": "webpack --mode production",
     "book:html": "ts-node book/build-book.ts",
     "book": "ts-node book/build-book.ts && pagedjs-cli dist-book/book.html --outline-tags h1 -o dist-book/usoro-plant-book.pdf",
+    "book:cover": "node book/render-cover.js",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
