@@ -140,6 +140,13 @@ small runtime bundle handles sidebar collapse, theme and scrollspy.
    tolerates soft line breaks, but keep the sweep).
 3. Spot-check the rendered `dist/` page — beware that grep for a phrase
    like "603 MW" can miss because `<abbr>` markup splits it.
+4. **If `ui/pipeline/` or `ui/components/` changed for the book's sake**
+   (see "The book build"): the site must be unaffected — byte-identical,
+   not just "looks fine". Verify by building, hashing, and comparing
+   against a build with the change reverted:
+   `find dist -name '*.html' | sort | xargs md5sum | md5sum`.
+   The book may only extend `renderBody` with *optional* hooks whose
+   defaults reproduce site behavior exactly (`renderPage` passes none).
 
 ## Gotchas (learned the hard way)
 
@@ -159,6 +166,26 @@ small runtime bundle handles sidebar collapse, theme and scrollspy.
 - Fact-check catch to remember: `kc2fn = 0` in the deck — the
   furnace-pressure air feedforward is zero-gained; don't describe it as
   active.
+
+## The book build (book/)
+
+The site's content also compiles into an A5 print book:
+`npm run book` → `dist-book/usoro-plant-book.pdf` (`book:html` stops at
+the HTML). Everything book-specific lives in `book/` — assembly
+(`build-book.ts`: cover, preface, contents, three parts from the
+manifest, appendix listings from `sourceFile:` front-matter, glossary +
+identifier tables from the pipeline's own data), the paged-media
+stylesheet (`book.css`), and a build-time hard-wrapper for long code
+lines (`wrap-code.ts`, 70-column measure, `↪` continuations). The
+renderer is shared, not forked: `renderPage` (site) and the book both
+call `renderBody` (`ui/pipeline/render.ts`), whose optional hooks
+(cross-link resolution, heading-id prefix, modal/equation toggles) are
+what the book overrides. Content edits therefore flow into both outputs;
+keep wording medium-neutral where possible. Rendering is Paged.js via
+`pagedjs-cli` (headless Chromium); key gotchas learned (never
+`text-align: justify` under Paged.js; `string-set` needs in-flow
+carriers; prism.css re-blocks `pre-wrap` on inner `<code>`) are recorded
+as comments in `book.css`.
 
 ## Not built (deliberate)
 

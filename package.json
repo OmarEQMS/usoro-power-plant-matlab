@@ -6,6 +6,8 @@
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "webpack --mode production",
+    "book:html": "ts-node book/build-book.ts",
+    "book": "ts-node book/build-book.ts && pagedjs-cli dist-book/book.html --outline-tags h1 -o dist-book/usoro-plant-book.pdf",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
@@ -28,6 +30,7 @@
     "markdown-it": "^14.1.0",
     "markdown-it-container": "^4.0.0",
     "mini-css-extract-plugin": "^2.9.1",
+    "pagedjs-cli": "^0.4.3",
     "sass": "^1.79.4",
     "sass-loader": "^16.0.2",
     "ts-loader": "^9.5.1",

@@ -1,4 +1,5 @@
 node_modules/
 dist/
+dist-book/
 npm-debug.log*
 *.tsbuildinfo

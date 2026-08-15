@@ -1,0 +1,547 @@
+/* Book stylesheet — A5 paged-media design for the Paged.js render.
+ * Standalone on purpose: the site's Bootstrap/Sass theme is screen
+ * furniture; the book styles the same content markup for print. */
+
+/* ------------------------------------------------------------- pages */
+@page {
+  size: 148mm 210mm; /* A5 portrait */
+  margin: 14mm 14mm 16mm 18mm;
+  @bottom-center {
+    content: counter(page);
+    font-family: Georgia, serif;
+    font-size: 8.5pt;
+    color: #444;
+  }
+}
+
+/* mirrored margins: inner (binding) 18mm, outer 14mm */
+@page :left {
+  margin-left: 14mm;
+  margin-right: 18mm;
+  @top-left {
+    content: string(book-title);
+    font-family: "Segoe UI", sans-serif;
+    font-size: 7pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #777;
+  }
+}
+
+@page :right {
+  @top-right {
+    content: string(chapter-title);
+    font-family: "Segoe UI", sans-serif;
+    font-size: 7pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #777;
+  }
+}
+
+@page cover {
+  margin: 0;
+  @bottom-center { content: none; }
+}
+
+/* preface + contents: no running heads, roman folios */
+@page frontmatter {
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @bottom-center {
+    content: counter(page, lower-roman);
+    font-family: Georgia, serif;
+    font-size: 8.5pt;
+    color: #444;
+  }
+}
+
+/* part dividers: bare pages, no folio */
+@page part {
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @bottom-center { content: none; }
+}
+
+/* chapter-opening pages carry no running head */
+@page chapter:first {
+  @top-left { content: none; }
+  @top-right { content: none; }
+}
+
+/* --------------------------------------------------------- base type */
+/* running-head strings come from in-flow carrier elements (a string-set
+ * on <html> never registers — Paged.js only reads paged content) */
+.string-carrier {
+  string-set: book-title content(text);
+  display: block;
+  height: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: Georgia, "Palatino Linotype", serif;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: #1a1a1a;
+  /* ragged right: with justify, the Paged.js render stretched every
+   * forced-break/final line to the full measure (headings, captions and
+   * code lines included) — ragged right sidesteps the whole bug class */
+  text-align: left;
+  hyphens: auto;
+}
+
+* { text-align-last: auto !important; } /* guard against the same phantom */
+
+p { margin: 0 0 0.65em; }
+
+strong { font-weight: 700; }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* in-book cross-references get a page number; out-of-book links ("#void")
+ * stay plain prose */
+.chapter a[href^="#page-"]::after {
+  content: " (p.\00A0" target-counter(attr(href), page) ")";
+  font-size: 85%;
+  color: #555;
+}
+
+/* abbr tooltips are a screen affordance */
+abbr[title] { text-decoration: none; }
+
+/* ------------------------------------------------------------ headings */
+h1, h2, h3 {
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  text-align: left;
+  hyphens: none;
+  break-after: avoid;
+}
+
+.chapter-kicker {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 9pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+  margin: 18mm 0 2mm;
+}
+
+.chapter h1 {
+  font-size: 19pt;
+  font-weight: 650;
+  line-height: 1.2;
+  margin: 0 0 9mm;
+  padding-bottom: 3mm;
+  border-bottom: 0.6pt solid #1d3557;
+  string-set: chapter-title content(text);
+}
+
+h2 {
+  font-size: 12.5pt;
+  font-weight: 650;
+  margin: 1.6em 0 0.5em;
+}
+
+h3 {
+  font-size: 10.5pt;
+  font-weight: 650;
+  margin: 1.2em 0 0.4em;
+}
+
+/* ------------------------------------------------------------- chapters */
+.chapter {
+  page: chapter;
+  break-before: page; /* parts carry the recto breaks; 45 chapters
+                         starting recto would strew ~20 blank versos */
+}
+
+/* ---------------------------------------------------------------- parts */
+.part {
+  page: part;
+  break-before: right;
+}
+
+/* arabic folios restart at Part I; the front matter stays roman */
+.part--first { counter-reset: page 1; }
+
+.part-number {
+  margin-top: 58mm;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 10pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+  text-align: center;
+}
+
+.part h1 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 24pt;
+  text-align: center;
+  margin: 4mm 0 0;
+}
+
+.part-rule {
+  width: 24mm;
+  border-top: 0.7pt solid #1d3557;
+  margin: 8mm auto 0;
+}
+
+/* -------------------------------------------------------------- preface */
+.preface {
+  page: frontmatter;
+  break-before: right;
+}
+
+.preface blockquote {
+  margin: 1em 0 1em 1.5em;
+  font-size: 9.2pt;
+  color: #333;
+  break-inside: avoid; /* a citation split across pages reads badly */
+}
+
+/* ---------------------------------------------------------------- cover */
+.cover {
+  page: cover;
+  width: 148mm;
+  height: 210mm;
+  background: #1d3557;
+  color: #f4f6f9;
+  display: flex;
+}
+
+.cover-frame {
+  flex: 1;
+  margin: 9mm;
+  border: 0.5pt solid rgba(244, 246, 249, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14mm 8mm 8mm;
+}
+
+.cover-kicker {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 8pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 249, 0.75);
+  margin-bottom: 10mm;
+}
+
+.cover-title {
+  font-family: Georgia, serif;
+  font-size: 30pt;
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0 0 6mm;
+  border: 0;
+}
+
+.cover-subtitle {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 11.5pt;
+  line-height: 1.45;
+  color: rgba(244, 246, 249, 0.85);
+}
+
+.cover-art {
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 74mm;
+  color: rgba(244, 246, 249, 0.9);
+}
+
+.cover-footer {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 249, 0.6);
+}
+
+/* ------------------------------------------------------------------ toc */
+.book-toc {
+  page: frontmatter;
+  break-before: right;
+}
+
+.book-toc h1,
+.preface h1 {
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  font-size: 19pt;
+  font-weight: 650;
+  margin: 18mm 0 9mm;
+  padding-bottom: 3mm;
+  border-bottom: 0.6pt solid #1d3557;
+}
+
+.toc-part {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 9pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1d3557;
+  margin-top: 1.4em;
+}
+
+.book-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.book-toc li {
+  overflow: hidden;
+  margin-bottom: 0.35em;
+}
+
+.book-toc a::after {
+  content: target-counter(attr(href), page);
+  float: right;
+  font-variant-numeric: tabular-nums;
+  color: #555;
+}
+
+.toc-chapter {
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 600;
+  font-size: 10.5pt;
+  margin-top: 0.9em;
+}
+
+.toc-num {
+  display: inline-block;
+  width: 1.6em;
+  color: #1d3557;
+}
+
+.toc-sub {
+  font-size: 9.5pt;
+  padding-left: 1.6em;
+  color: #333;
+}
+
+/* ------------------------------------------------------------------ code */
+pre[class*="language-"],
+code[class*="language-"] {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 8pt;
+  line-height: 1.4;
+  text-shadow: none;
+  text-align: left;
+  hyphens: none;
+}
+
+pre[class*="language-"],
+pre[class*="language-"] > code {
+  /* A5 is narrow: wrap rather than clip. The inner <code> must be set
+   * too — prism.css puts white-space: pre on it, which blocks wrapping
+   * (caught in the PoC: a 78-char line ran out of the box) */
+  white-space: pre-wrap;
+}
+
+pre[class*="language-"] {
+  background: #f6f6f3;
+  border: 0.5pt solid #ddd;
+  border-radius: 2pt;
+  padding: 2.2mm 3mm;
+  margin: 0.9em 0;
+  overflow: visible;
+  break-inside: avoid; /* short excerpts stay whole; page-length listings
+                          still split (Paged.js breaks what cannot fit) */
+}
+
+:not(pre) > code {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 88%;
+  color: #24344d;
+}
+
+/* build-time continuation marker for hard-wrapped long code lines
+ * (selector outweighs prism.css token colors when the break lands
+ * inside a token span) */
+pre[class*="language-"] span.code-cont { color: #999; }
+
+/* --------------------------------------------------------------- blocks */
+.callout {
+  border: 0.5pt solid #ccc;
+  border-left: 2.5pt solid #1d3557;
+  border-radius: 2pt;
+  padding: 2.2mm 3.2mm;
+  margin: 1em 0;
+  font-size: 9.2pt;
+  break-inside: avoid;
+}
+
+.callout > :last-child { margin-bottom: 0; }
+
+.callout-heading {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.4em;
+}
+
+.callout-icon { display: none; } /* emoji are screen furniture */
+
+.callout-why { border-left-color: #4a7fb5; background: #f2f6fb; }
+.callout-why .callout-heading { color: #35618f; }
+
+.callout-caution { border-left-color: #c9a227; background: #fdf9ec; }
+.callout-caution .callout-heading { color: #8f7115; }
+
+.callout-definition { border-left-color: #3f7d4e; }
+.callout-definition .callout-heading { color: #3f7d4e; }
+
+.eq-block {
+  display: flex;
+  flex-direction: column-reverse; /* markup: caption first; print: below */
+  margin: 1em 0;
+  break-inside: avoid;
+}
+
+.eq-block figcaption {
+  font-size: 8pt;
+  color: #555;
+  text-align: right;
+  margin-top: 0.3em;
+}
+
+.eq-block .eq-number { font-weight: 700; }
+
+.math-block { overflow: visible; }
+.katex { font-size: 1.05em; } /* KaTeX's 1.21em default towers over Georgia */
+.katex-display { margin: 0.4em 0; }
+
+.block-metrics,
+.block-code-map,
+.block-compare {
+  margin: 1em 0;
+  break-inside: avoid;
+}
+
+.block-heading {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 0.4em;
+}
+
+.compare-grid { display: block; } /* side-by-side never fits A5: stack */
+.compare-grid pre { margin: 0 0 0.6em; }
+
+/* --------------------------------------------------------------- tables */
+.table-responsive { overflow: visible; } /* screen scroller: never clip print */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.6pt;
+  line-height: 1.35;
+  margin: 0.9em 0;
+  text-align: left;
+}
+
+th, td {
+  padding: 0.9mm 1.8mm;
+  border-top: 0.5pt solid #ddd;
+  vertical-align: top;
+}
+
+thead th { border-top: 0; border-bottom: 0.7pt solid #888; }
+
+.block-metrics table td:last-child,
+.block-metrics table td:nth-child(2) {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.block-code-map table td:first-child {
+  font-family: Consolas, monospace;
+  font-size: 8pt;
+}
+
+/* --------------------------------------------------------------- figures */
+.content-figure {
+  margin: 1.1em 0;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.content-figure figcaption {
+  font-size: 8pt;
+  color: #555;
+  text-align: left;
+  margin-bottom: 0.4em;
+}
+
+.content-figure img,
+.content-figure svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* any inline SVG (e.g. the plant schematic) must respect the measure */
+.chapter svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ----------------------------------------------------------- back matter */
+/* appendix listings: no box — chunked <pre> blocks flow seamlessly and
+ * paginate between chunks */
+.backmatter .listing {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  break-inside: auto;
+}
+
+.listing-name {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 11pt;
+  margin-top: 2em;
+}
+
+.listing-path {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 7.5pt;
+  color: #777;
+  margin: -0.3em 0 0.6em;
+}
+
+.listing-file {
+  margin: 0 0 1.2em;
+}
+
+/* glossary + identifier tables: two compact columns, hanging indents */
+.gloss {
+  columns: 2;
+  column-gap: 6mm;
+  font-size: 8.5pt;
+  line-height: 1.4;
+}
+
+.g-entry {
+  margin: 0 0 0.25em;
+  break-inside: avoid;
+  text-indent: -1.2em;
+  padding-left: 1.2em;
+}

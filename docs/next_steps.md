@@ -53,3 +53,18 @@ mentions but never plots.
 - **Thesis Tests we cannot verify:** the remaining thesis materials
   (per-test driver code, coordinated-mode runs) are not in the scanned
   listings; any reproduction beyond Figs. V.1–V.11 is uncheckable.
+
+## 4. Site and book (small chores)
+
+The A5 book build (`npm run book`, see `ui.md` "The book build") is
+complete at 236 pages; two decisions are pending:
+
+- **Cover author line:** the book cover carries no author name — decide
+  what to put there (if anything) and add it to `coverHtml()` in
+  `book/build-book.ts`.
+- **Screen-voice caption on `plant/overview`:** the schematic caption in
+  `ui/content/plant/overview.md` says every component is "clickable — it
+  opens that component's page", which is false in print. A medium-neutral
+  wording ("each component links to its page") would be true on both the
+  site and paper; the edit affects both outputs, so it is a deliberate
+  content change, not a book-build fix.

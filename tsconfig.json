@@ -12,6 +12,6 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["webpack.config.ts", "ui/**/*.ts"],
+  "include": ["webpack.config.ts", "ui/**/*.ts", "book/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

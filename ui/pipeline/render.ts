@@ -29,6 +29,12 @@ export interface RenderEnv {
   page: Page;
   toc: TocEntry[];
   unknownAbbr?: Set<string>;
+  /** book build: map a validated cross-page link to an href (site default:
+   *  relative href between output files) */
+  resolveLink?: (toId: string, anchor?: string) => string;
+  /** book build: heading ids get `<prefix>--` so 45 chapters can share one
+   *  document without anchor collisions */
+  idPrefix?: string;
 }
 
 function slugify(text: string): string {
@@ -79,8 +85,9 @@ md.core.ruler.push('heading_anchors', (state) => {
       .map((t) => t.content)
       .join('') ?? '';
     const slug = slugify(text);
-    open.attrSet('id', slug);
-    env.toc.push({ level: open.tag === 'h2' ? 2 : 3, slug, text });
+    const id = env.idPrefix ? `${env.idPrefix}--${slug}` : slug;
+    open.attrSet('id', id);
+    env.toc.push({ level: open.tag === 'h2' ? 2 : 3, slug: id, text });
   }
 });
 
@@ -93,8 +100,13 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   if (href && href.startsWith('@')) {
     const [id, anchor] = href.slice(1).split('#');
     const page = getPage(id); // throws on unknown id -> build failure
-    const rel = hrefFrom((env as RenderEnv).page.id, page.id);
-    tokens[idx].attrSet('href', anchor ? `${rel}#${anchor}` : rel);
+    const renderEnv = env as RenderEnv;
+    if (renderEnv.resolveLink) {
+      tokens[idx].attrSet('href', renderEnv.resolveLink(page.id, anchor));
+    } else {
+      const rel = hrefFrom(renderEnv.page.id, page.id);
+      tokens[idx].attrSet('href', anchor ? `${rel}#${anchor}` : rel);
+    }
   }
   return defaultLinkOpen(tokens, idx, options, env, self);
 };
@@ -170,11 +182,42 @@ ${panes
   return { button, modal };
 }
 
-export function renderPage(page: Page): string {
+/** Invariant: every option defaults to the site's behavior. renderPage
+ *  passes none, and the site build must stay byte-identical to a
+ *  renderer without these hooks (verification recipe: docs/ui.md,
+ *  checklist item 4). Extend the book only with new optional hooks that
+ *  keep that property. */
+export interface RenderBodyOptions {
+  /** book build: override cross-page link hrefs (default: relative site href) */
+  resolveLink?: (toId: string, anchor?: string) => string;
+  /** book build: unique-id prefix for headings (default: none) */
+  idPrefix?: string;
+  /** include the view-source modal button + markup (site default: true;
+   *  the book renders listings its own way) */
+  sourceModal?: boolean;
+  /** restart equation numbering (site: per page; the book resets once and
+   *  numbers continuously — no prose references numbers, so this is safe) */
+  resetEquations?: boolean;
+}
+
+export interface RenderedBody {
+  body: string;
+  toc: TocEntry[];
+  description?: string;
+  /** `sourceFile:` front-matter paths, repo-relative (empty when absent) */
+  sourceFiles: string[];
+}
+
+export function renderBody(page: Page, opts: RenderBodyOptions = {}): RenderedBody {
   const raw = fs.readFileSync(page.src, 'utf8');
   const { data, content } = matter(raw);
-  const env: RenderEnv = { page, toc: [] };
-  resetEquationCounter();
+  const env: RenderEnv = {
+    page,
+    toc: [],
+    resolveLink: opts.resolveLink,
+    idPrefix: opts.idPrefix,
+  };
+  if (opts.resetEquations !== false) resetEquationCounter();
   let body = md.render(content, env);
 
   const sourceFiles: string[] = Array.isArray(data.sourceFile)
@@ -182,7 +225,7 @@ export function renderPage(page: Page): string {
     : typeof data.sourceFile === 'string'
       ? [data.sourceFile]
       : [];
-  if (sourceFiles.length > 0) {
+  if (sourceFiles.length > 0 && opts.sourceModal !== false) {
     const { button, modal } = sourceModalParts(sourceFiles);
     body = body.replace('</h1>', `${button}</h1>`) + modal;
   }
@@ -195,10 +238,15 @@ export function renderPage(page: Page): string {
     );
   }
 
-  return shell({
-    page,
-    description: typeof data.description === 'string' ? data.description : undefined,
+  return {
     body,
     toc: env.toc,
-  });
+    description: typeof data.description === 'string' ? data.description : undefined,
+    sourceFiles,
+  };
+}
+
+export function renderPage(page: Page): string {
+  const { body, toc, description } = renderBody(page);
+  return shell({ page, description, body, toc });
 }
